@@ -14,6 +14,7 @@ export async function exportDatabase() {
         prisma.customer.findMany(),
         prisma.product.findMany(),
         prisma.sale.findMany(),
+        prisma.monthlyTarget.findMany(),
     ]);
 
     return {
@@ -22,7 +23,8 @@ export async function exportDatabase() {
             stores,
             customers,
             products,
-            sales
+            sales,
+            monthlyTargets: await prisma.monthlyTarget.findMany() // Fix destructuring index issue or just use variable
         }
     };
 }
@@ -37,7 +39,7 @@ export async function importDatabase(data: any) {
         throw new Error('Invalid backup file format');
     }
 
-    const { stores, customers, products, sales } = data.data;
+    const { stores, customers, products, sales, monthlyTargets } = data.data;
 
     try {
         // Restore Stores
@@ -91,6 +93,22 @@ export async function importDatabase(data: any) {
                     where: { id: sale.id }, // ID must exist in backup
                     update: { ...sale },
                     create: { ...sale }
+                });
+            }
+        }
+
+        // Restore Monthly Targets
+        if (monthlyTargets?.length) {
+            for (const target of monthlyTargets) {
+                await prisma.monthlyTarget.upsert({
+                    where: {
+                        month_year: {
+                            month: target.month,
+                            year: target.year
+                        }
+                    },
+                    update: { ...target },
+                    create: { ...target }
                 });
             }
         }
