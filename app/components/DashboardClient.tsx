@@ -33,6 +33,8 @@ export function DashboardClient({ sales, user, targetRevenue, lateShipmentCount 
         }
     }, [role, router]);
 
+    const [customTarget, setCustomTarget] = useState<number | null>(null);
+
     const handlePrevMonth = () => {
         setCurrentDate(prev => {
             const newDate = new Date(prev);
@@ -48,6 +50,16 @@ export function DashboardClient({ sales, user, targetRevenue, lateShipmentCount 
             return newDate;
         });
     };
+
+    // Fetch target when month changes
+    useEffect(() => {
+        import('../actions/sales').then(({ getMonthlyTarget }) => {
+            getMonthlyTarget(currentDate.getMonth(), currentDate.getFullYear()).then(data => {
+                if (data) setCustomTarget(data.target);
+                else setCustomTarget(null);
+            });
+        });
+    }, [currentDate]);
 
     // Filter sales by selected month
     const filteredSales = sales.filter(sale => {
@@ -97,7 +109,7 @@ export function DashboardClient({ sales, user, targetRevenue, lateShipmentCount 
 
             <SummaryCards
                 data={salesData}
-                targetRevenue={targetRevenue}
+                targetRevenue={customTarget ?? targetRevenue}
             />
 
             {/* Warehouse role sees only summary cards */}

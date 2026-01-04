@@ -3,6 +3,7 @@
 import { Sidebar } from "./Sidebar";
 import { SidebarProvider, useSidebar } from "../contexts/SidebarContext";
 import { RoleProvider } from "../contexts/RoleContext";
+import { Topbar } from "./Topbar";
 import { clsx } from "clsx";
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
@@ -12,16 +13,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         <div className="flex min-h-screen">
             <Sidebar />
             <main
-                className={clsx(
-                    "flex-1 p-6 bg-background transition-all duration-300 ease-in-out",
-                    isCollapsed ? "md:ml-20" : "md:ml-64"
-                )}
+                className="flex-1 flex flex-col bg-background transition-all duration-300 ease-in-out"
             >
-                <div className="max-w-7xl mx-auto w-full">
+                <Topbar />
+                <div className="p-6 max-w-7xl mx-auto w-full">
                     {children}
                 </div>
             </main>
-        </div>
+        </div >
     );
 }
 

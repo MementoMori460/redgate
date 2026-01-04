@@ -12,6 +12,13 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 export function SidebarProvider({ children }: { children: ReactNode }) {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
+    React.useEffect(() => {
+        // Default to collapsed on mobile
+        if (typeof window !== 'undefined' && window.innerWidth < 768) {
+            setIsCollapsed(true);
+        }
+    }, []);
+
     const toggleSidebar = () => setIsCollapsed(!isCollapsed);
 
     return (

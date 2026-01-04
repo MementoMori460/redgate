@@ -6,7 +6,7 @@ import { ClientLayout } from "./components/ClientLayout";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SalesTrack 2025",
+  title: "SalesTrack 2026 by Memento",
   description: "Advanced Sales Tracking Application",
   icons: {
     icon: '/logo.png',

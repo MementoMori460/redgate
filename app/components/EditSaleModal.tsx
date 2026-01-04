@@ -40,6 +40,8 @@ export function EditSaleModal({ sale, onClose, user }: EditSaleModalProps) {
     const [netProfit, setNetProfit] = useState<number>(sale.profit);
     const [date, setDate] = useState<string>(sale.date);
     const [description, setDescription] = useState<string>(sale.description || '');
+    const [waybillNumber, setWaybillNumber] = useState<string>(sale.waybillNumber || '');
+    const [invoiceNumber, setInvoiceNumber] = useState<string>(sale.invoiceNumber || '');
 
     // Store logic
     const [stores, setStores] = useState<Store[]>([]);
@@ -188,7 +190,9 @@ export function EditSaleModal({ sale, onClose, user }: EditSaleModalProps) {
                 price: calculateDiscountedPrice(),
                 total: totalPrice,
                 profit: netProfit,
-                description: description
+                description: description,
+                waybillNumber: waybillNumber,
+                invoiceNumber: invoiceNumber
             });
 
             // Reload page to reflect changes
@@ -478,6 +482,29 @@ export function EditSaleModal({ sale, onClose, user }: EditSaleModalProps) {
                                 className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all resize-none h-20"
                                 placeholder="Sipariş notu..."
                             />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-secondary-foreground">İrsaliye No</label>
+                                <input
+                                    type="text"
+                                    value={waybillNumber}
+                                    onChange={(e) => setWaybillNumber(e.target.value)}
+                                    className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all"
+                                    placeholder="IRS-..."
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-secondary-foreground">Fatura No</label>
+                                <input
+                                    type="text"
+                                    value={invoiceNumber}
+                                    onChange={(e) => setInvoiceNumber(e.target.value)}
+                                    className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all"
+                                    placeholder="FAT-..."
+                                />
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-6">

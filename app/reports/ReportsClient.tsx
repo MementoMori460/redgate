@@ -7,12 +7,13 @@ import {
 import { useRole } from '../contexts/RoleContext';
 import { ArrowUp, ArrowDown, TrendingUp, TrendingDown, DollarSign, Package, Users, ShoppingBag } from 'lucide-react';
 import { clsx } from 'clsx';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 interface MonthlyStat {
     name: string;
     revenue: number;
     profit: number;
+    target: number; // New field
     salesCount: number;
     customerCount: number;
     revenueGrowth: number;
@@ -38,6 +39,7 @@ interface ReportsClientProps {
         topSalesPeople: { name: string; value: number }[];
         topProducts: { name: string; quantity: number; revenue: number }[];
         storePerformance: StoreStat[];
+        sales: any[]; // Using any to avoid importing full Sale type for now, but strict typing is better long term
     }
 }
 
@@ -45,13 +47,68 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 
 export function ReportsClient({ data }: ReportsClientProps) {
     const { role } = useRole();
-    const { monthlyComparison, regionData, topSalesPeople, topProducts, storePerformance } = data;
+    const { monthlyComparison, regionData, topSalesPeople, topProducts: initialTopProducts, storePerformance: initialStorePerformance, sales } = data;
     const showProfit = role === 'admin' || role === 'accountant';
 
+    // Time Range State
+    const [timeRange, setTimeRange] = useState<'1m' | '3m' | '6m' | '1y' | 'all'>('all');
+
+    // Filter Sales based on Range
+    const filteredSales = useMemo(() => {
+        if (timeRange === 'all') return sales;
+
+        const now = new Date();
+        const cutoff = new Date();
+
+        if (timeRange === '1m') cutoff.setMonth(now.getMonth() - 1);
+        if (timeRange === '3m') cutoff.setMonth(now.getMonth() - 3);
+        if (timeRange === '6m') cutoff.setMonth(now.getMonth() - 6);
+        if (timeRange === '1y') cutoff.setFullYear(now.getFullYear() - 1);
+
+        return sales.filter(s => new Date(s.date) >= cutoff);
+    }, [sales, timeRange]);
+
+    // Recalculate Top Products
+    const topProducts = useMemo(() => {
+        const productStats = new Map<string, { name: string, quantity: number, revenue: number }>();
+        filteredSales.forEach((sale: any) => {
+            const product = sale.item;
+            if (!productStats.has(product)) {
+                productStats.set(product, { name: product, quantity: 0, revenue: 0 });
+            }
+            const stat = productStats.get(product)!;
+            stat.quantity += sale.quantity;
+            stat.revenue += Number(sale.total); // Ensure number
+        });
+
+        return Array.from(productStats.values())
+            .sort((a, b) => b.revenue - a.revenue)
+            .slice(0, 10);
+    }, [filteredSales]);
+
+    // Recalculate Store Performance
+    const storePerformance = useMemo(() => {
+        const storeStats = new Map<string, { name: string, region: string, city: string, revenue: number, profit: number, count: number }>();
+        filteredSales.forEach((sale: any) => {
+            const key = sale.storeCode || sale.storeName;
+            if (!storeStats.has(key)) {
+                storeStats.set(key, { name: sale.storeName, region: sale.region, city: sale.city, revenue: 0, profit: 0, count: 0 });
+            }
+            const stat = storeStats.get(key)!;
+            stat.revenue += Number(sale.total);
+            stat.profit += Number(sale.profit);
+            stat.count += 1;
+        });
+
+        return Array.from(storeStats.values())
+            .sort((a, b) => b.revenue - a.revenue);
+    }, [filteredSales]);
+
+
     // Reverse monthly data for table (newest first)
-    const tableData = [...monthlyComparison].reverse();
+    const tableData = [...monthlyComparison];
     // Chart data is usually oldest first
-    const chartData = monthlyComparison;
+    const chartData = monthlyComparison; // They are passed correct/ASC from server, client reverses for table
 
     const currentMonth = tableData[0] || { revenue: 0, profit: 0, revenueGrowth: 0, profitGrowth: 0, salesCount: 0 };
 
@@ -110,7 +167,7 @@ export function ReportsClient({ data }: ReportsClientProps) {
                 <div className="md:col-span-8 bg-card border border-border/50 rounded-xl p-4 shadow-sm min-h-[350px]">
                     <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
                         <TrendingUp size={16} className="text-primary" />
-                        Finansal Genel Bakış (Aylık)
+                        Finansal Genel Bakış (Son 6 Ay)
                     </h3>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -125,11 +182,18 @@ export function ReportsClient({ data }: ReportsClientProps) {
                                 />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
-                                    formatter={(value: any) => typeof value === 'number' ? value.toLocaleString('tr-TR', { maximumFractionDigits: 0 }) : value}
+                                    formatter={(value: any, name: any) => {
+                                        if (name === 'Hedef') {
+                                            const val = Number(value);
+                                            return [val > 0 ? val.toLocaleString('tr-TR', { maximumFractionDigits: 0 }) + ' ₺' : '0 ₺', name];
+                                        }
+                                        return [typeof value === 'number' ? value.toLocaleString('tr-TR', { maximumFractionDigits: 0 }) : value, name];
+                                    }}
                                 />
                                 <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
                                 <Bar dataKey="revenue" name="Ciro" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={50} />
                                 {showProfit && <Bar dataKey="profit" name="Kar" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={50} />}
+                                <Line type="monotone" dataKey="target" name="Hedef" stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -164,7 +228,7 @@ export function ReportsClient({ data }: ReportsClientProps) {
                 {/* Monthly Comparison Table - Span 12 */}
                 <div className="md:col-span-12 bg-card border border-border/50 rounded-xl shadow-sm overflow-hidden">
                     <div className="p-4 border-b border-border/50">
-                        <h3 className="text-sm font-semibold">Aylık Karşılaştırma Raporu</h3>
+                        <h3 className="text-sm font-semibold">Aylık Karşılaştırma Raporu ({tableData.length > 0 ? `${tableData[tableData.length - 1].name} - ${tableData[0].name}` : 'Tüm Zamanlar'})</h3>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
@@ -206,8 +270,19 @@ export function ReportsClient({ data }: ReportsClientProps) {
 
                 {/* Top Products - Span 6 */}
                 <div className="md:col-span-6 bg-card border border-border/50 rounded-xl shadow-sm h-[400px] flex flex-col">
-                    <div className="p-4 border-b border-border/50">
-                        <h3 className="text-sm font-semibold">En Çok Satan Ürünler (Ciro Bazlı)</h3>
+                    <div className="p-4 border-b border-border/50 flex justify-between items-center">
+                        <h3 className="text-sm font-semibold">En Çok Satan Ürünler</h3>
+                        <select
+                            value={timeRange}
+                            onChange={(e) => setTimeRange(e.target.value as any)}
+                            className="text-xs bg-secondary/50 border border-border/50 rounded-lg px-2 py-1 outline-none font-medium"
+                        >
+                            <option value="1m">Son 1 Ay</option>
+                            <option value="3m">Son 3 Ay</option>
+                            <option value="6m">Son 6 Ay</option>
+                            <option value="1y">Son 1 Yıl</option>
+                            <option value="all">Tüm Zamanlar</option>
+                        </select>
                     </div>
                     <div className="flex-1 overflow-y-auto p-2">
                         <table className="w-full text-sm">
@@ -233,8 +308,19 @@ export function ReportsClient({ data }: ReportsClientProps) {
 
                 {/* Store Performance - Span 6 */}
                 <div className="md:col-span-6 bg-card border border-border/50 rounded-xl shadow-sm h-[400px] flex flex-col">
-                    <div className="p-4 border-b border-border/50">
+                    <div className="p-4 border-b border-border/50 flex justify-between items-center">
                         <h3 className="text-sm font-semibold">Mağaza Performansı</h3>
+                        <select
+                            value={timeRange}
+                            onChange={(e) => setTimeRange(e.target.value as any)}
+                            className="text-xs bg-secondary/50 border border-border/50 rounded-lg px-2 py-1 outline-none font-medium"
+                        >
+                            <option value="1m">Son 1 Ay</option>
+                            <option value="3m">Son 3 Ay</option>
+                            <option value="6m">Son 6 Ay</option>
+                            <option value="1y">Son 1 Yıl</option>
+                            <option value="all">Tüm Zamanlar</option>
+                        </select>
                     </div>
                     <div className="flex-1 overflow-y-auto p-2">
                         <table className="w-full text-sm">

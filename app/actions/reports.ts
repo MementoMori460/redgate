@@ -49,16 +49,27 @@ export async function getReportData() {
     // Convert Map to Array and Sort by Date
     const sortedMonths = Array.from(monthlyStats.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
 
+    // Fetch Monthly Targets
+    const targets = await prisma.monthlyTarget.findMany();
+    const targetMap = new Map<string, number>();
+    targets.forEach(t => {
+        // targets are stored with day=1, but let's key by YYYY-MM
+        const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
+        targetMap.set(key, t.target.toNumber());
+    });
+
     // Calculate MoM Growth
     const monthlyComparison = sortedMonths.map((curr, index) => {
         const prev = sortedMonths[index - 1];
         const prevRevenue = prev ? prev.revenue : 0;
         const prevProfit = prev ? prev.profit : 0;
+        const dateKey = `${curr.date.getFullYear()}-${String(curr.date.getMonth() + 1).padStart(2, '0')}`;
 
         return {
             name: curr.name,
             revenue: curr.revenue,
             profit: curr.profit,
+            target: targetMap.get(dateKey) || 0, // Add Target
             salesCount: curr.salesCount,
             customerCount: curr.customers.size,
             revenueGrowth: prevRevenue > 0 ? ((curr.revenue - prevRevenue) / prevRevenue) * 100 : 0,
@@ -118,14 +129,38 @@ export async function getReportData() {
         .slice(0, 5);
 
 
+    // 6. Calculate Financials (Total Revenue, Profit, Count)
+    const financials = await prisma.sale.aggregate({
+        _sum: {
+            total: true,
+            profit: true
+        },
+        _count: {
+            id: true
+        }
+    });
+
+    const safeNumber = (val: any) => val ? Number(val) : 0;
+
+    // Return data
     return {
-        monthlyComparison: monthlyComparison.reverse(), // Newest first for table, usually. Or maybe existing was asc? Let's return DESC for listing, but ASC for charts.
-        // Actually, charts usually need ASC (Jan -> Dec). Table needs DESC (Dec -> Jan).
-        // Let's return standard ASC and let client reverse for table.
+        financials: {
+            totalRevenue: safeNumber(financials._sum.total),
+            totalProfit: safeNumber(financials._sum.profit),
+            totalCost: safeNumber(financials._sum.total) - safeNumber(financials._sum.profit),
+            totalSales: financials._count.id
+        },
+        monthlyComparison: monthlyComparison.reverse(),
         monthlyData: monthlyComparison,
-        storePerformance,
         topProducts,
         regionData,
-        topSalesPeople
+        topSalesPeople,
+        storePerformance,
+        sales: sales.map(s => ({
+            ...s,
+            price: Number(s.price),
+            total: Number(s.total),
+            profit: Number(s.profit),
+        }))
     };
 }

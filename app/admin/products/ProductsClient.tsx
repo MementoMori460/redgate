@@ -64,40 +64,40 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
 
             <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-secondary/50 text-muted-foreground font-medium border-b border-border">
+                    <table className="w-full text-xs text-left compact-table">
+                        <thead className="bg-secondary/50 text-muted-foreground font-medium border-b border-border text-[10px] uppercase">
                             <tr>
-                                <th className="px-6 py-3">Ürün Kodu</th>
-                                <th className="px-6 py-3">Ürün Adı</th>
-                                <th className="px-6 py-3 text-right">Fiyat</th>
-                                <th className="px-6 py-3 text-right">Maliyet</th>
-                                <th className="px-6 py-3 w-20">İşlemler</th>
+                                <th className="px-3 py-2">Ürün Kodu</th>
+                                <th className="px-3 py-2">Ürün Adı</th>
+                                <th className="px-3 py-2 text-right">Fiyat</th>
+                                <th className="px-3 py-2 text-right">Maliyet</th>
+                                <th className="px-3 py-2 w-20">İşlemler</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
                             {filteredProducts.map((product) => (
-                                <tr key={product.id} className="hover:bg-secondary/20 transition-colors">
-                                    <td className="px-6 py-3 font-mono text-xs">{product.productNumber}</td>
-                                    <td className="px-6 py-3 font-medium">{product.name}</td>
-                                    <td className="px-6 py-3 text-right">
+                                <tr key={product.id} className="hover:bg-secondary/20 transition-colors h-8">
+                                    <td className="px-3 py-1 font-mono text-[10px]">{product.productNumber}</td>
+                                    <td className="px-3 py-1 font-medium">{product.name}</td>
+                                    <td className="px-3 py-1 text-right">
                                         {product.price ? `${product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL` : '-'}
                                     </td>
-                                    <td className="px-6 py-3 text-right text-muted-foreground">
+                                    <td className="px-3 py-1 text-right text-muted-foreground">
                                         {product.cost ? `${product.cost.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL` : '-'}
                                     </td>
-                                    <td className="px-6 py-3">
-                                        <div className="flex items-center justify-end gap-2">
+                                    <td className="px-3 py-1">
+                                        <div className="flex items-center justify-end gap-1">
                                             <button
                                                 onClick={() => { setEditingProduct(product); setIsModalOpen(true); }}
-                                                className="p-1.5 hover:bg-secondary rounded-md text-blue-500 transition-colors"
+                                                className="p-1 hover:bg-secondary rounded-md text-blue-500 transition-colors"
                                             >
-                                                <Edit2 size={16} />
+                                                <Edit2 size={14} />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(product.id || '')}
-                                                className="p-1.5 hover:bg-secondary rounded-md text-red-500 transition-colors"
+                                                className="p-1 hover:bg-secondary rounded-md text-red-500 transition-colors"
                                             >
-                                                <Trash2 size={16} />
+                                                <Trash2 size={14} />
                                             </button>
                                         </div>
                                     </td>
@@ -105,7 +105,7 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                             ))}
                             {filteredProducts.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
+                                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                                         Ürün bulunamadı.
                                     </td>
                                 </tr>

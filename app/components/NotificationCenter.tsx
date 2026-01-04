@@ -1,7 +1,7 @@
 'use client';
 
 import { Bell, Truck, AlertTriangle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { clsx } from 'clsx';
 
 interface Notification {
@@ -21,7 +21,21 @@ const mockNotifications: Notification[] = [
 
 export function NotificationCenter() {
     const [isOpen, setIsOpen] = useState(false);
-    const unreadCount = mockNotifications.filter(n => !n.isRead).length;
+    const [notifications, setNotifications] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetch = () => {
+            import('../actions/notifications').then(({ getNotifications }) => {
+                getNotifications().then(setNotifications);
+            });
+        };
+        fetch();
+        // Poll every 60s
+        const interval = setInterval(fetch, 60000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const unreadCount = notifications.length; // Assuming all returned are unread for now
 
     return (
         <div className="relative">
@@ -41,34 +55,35 @@ export function NotificationCenter() {
                         <h3 className="font-semibold text-foreground">Bildirimler</h3>
                     </div>
                     <div className="max-h-96 overflow-y-auto">
-                        {mockNotifications.map((notification) => (
-                            <div
-                                key={notification.id}
-                                className={clsx(
-                                    "p-4 border-b border-border last:border-0 hover:bg-secondary/20 transition-colors cursor-pointer",
-                                    !notification.isRead && "bg-primary/5"
-                                )}
-                            >
-                                <div className="flex gap-3">
-                                    <div className={clsx(
-                                        "mt-1 w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                                        notification.type === 'warning' ? "bg-red-500/10 text-red-500" : "bg-blue-500/10 text-blue-500"
-                                    )}>
-                                        {notification.type === 'warning' ? <AlertTriangle size={14} /> : <Truck size={14} />}
-                                    </div>
-                                    <div>
-                                        <h4 className="text-sm font-medium text-foreground">{notification.title}</h4>
-                                        <p className="text-xs text-secondary-foreground mt-1">{notification.message}</p>
-                                        <p className="text-[10px] text-muted mt-2">{notification.time}</p>
+                        {notifications.length === 0 ? (
+                            <div className="p-4 text-center text-muted text-sm">Hiç bildirim yok.</div>
+                        ) : (
+                            notifications.map((notification) => (
+                                <div
+                                    key={notification.id}
+                                    className={clsx(
+                                        "p-4 border-b border-border last:border-0 hover:bg-secondary/20 transition-colors cursor-pointer",
+                                        "bg-primary/5" // All displayed as unread style for now
+                                    )}
+                                >
+                                    <div className="flex gap-3">
+                                        <div className={clsx(
+                                            "mt-1 w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                                            notification.type === 'warning' ? "bg-red-500/10 text-red-500" : "bg-blue-500/10 text-blue-500"
+                                        )}>
+                                            {notification.type === 'warning' ? <AlertTriangle size={14} /> : <Truck size={14} />}
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-medium text-foreground">{notification.title}</h4>
+                                            <p className="text-xs text-secondary-foreground mt-1">{notification.message}</p>
+                                            <p className="text-[10px] text-muted mt-2">
+                                                {new Date(notification.time).toLocaleString('tr-TR')}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="p-3 border-t border-border bg-secondary/10 text-center">
-                        <button className="text-xs font-medium text-primary hover:text-accent transition-colors">
-                            Tümünü okundu işaretle
-                        </button>
+                            ))
+                        )}
                     </div>
                 </div>
             )}

@@ -76,10 +76,7 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold">Müşteri Yönetimi</h1>
-                    <p className="text-muted-foreground">Müşteri listesi ve detayları</p>
-                </div>
+
 
                 <div className="hidden lg:block bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-lg">
                     <p className="text-xs text-blue-600">
@@ -130,67 +127,67 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                        <thead className="text-xs uppercase bg-secondary/30 text-muted-foreground font-semibold">
+                    <table className="w-full text-xs text-left compact-table">
+                        <thead className="text-[10px] uppercase bg-secondary/30 text-muted-foreground font-semibold">
                             <tr>
-                                <th className="px-6 py-4">Müşteri Adı</th>
-                                <th className="px-6 py-4">Şehir</th>
-                                <th className="px-6 py-4">İletişim</th>
-                                <th className="px-6 py-4">Mağaza Kodu</th>
-                                <th className="px-6 py-4 text-center">İşlem</th>
+                                <th className="px-3 py-2">Müşteri Adı</th>
+                                <th className="px-3 py-2">Şehir</th>
+                                <th className="px-3 py-2">İletişim</th>
+                                <th className="px-3 py-2">Mağaza Kodu</th>
+                                <th className="px-3 py-2 text-center">İşlem</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
                             {filteredCustomers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
+                                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                                         Kayıtlı müşteri bulunamadı.
                                     </td>
                                 </tr>
                             ) : (
                                 filteredCustomers.map((customer) => (
-                                    <tr key={customer.id} className="hover:bg-secondary/10 transition-colors">
-                                        <td className="px-6 py-4 font-medium">
-                                            <div className="flex items-center gap-3">
-                                                <div className="bg-primary/10 p-2 rounded-lg text-primary">
-                                                    <Building2 size={18} />
+                                    <tr key={customer.id} className="hover:bg-secondary/10 transition-colors h-8">
+                                        <td className="px-3 py-1 font-medium">
+                                            <div className="flex items-center gap-2">
+                                                <div className="bg-primary/10 p-1 rounded text-primary">
+                                                    <Building2 size={14} />
                                                 </div>
                                                 {customer.name}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-muted-foreground">
+                                        <td className="px-3 py-1 text-muted-foreground">
                                             {customer.city && (
-                                                <div className="flex items-center gap-2">
-                                                    <MapPin size={14} />
+                                                <div className="flex items-center gap-1">
+                                                    <MapPin size={12} />
                                                     {customer.city}
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 text-muted-foreground">
+                                        <td className="px-3 py-1 text-muted-foreground">
                                             <div className="flex flex-col">
                                                 <span>{customer.contactName || '-'}</span>
-                                                <span className="text-xs">{customer.phone} {customer.email && `• ${customer.email}`}</span>
+                                                <span className="text-[10px] opacity-70">{customer.phone}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 font-mono text-xs">{customer.storeCode || '-'}</td>
-                                        <td className="px-6 py-4 text-center">
-                                            <div className="flex items-center justify-center gap-2">
+                                        <td className="px-3 py-1 font-mono text-[10px]">{customer.storeCode || '-'}</td>
+                                        <td className="px-3 py-1 text-center">
+                                            <div className="flex items-center justify-center gap-1">
                                                 <button
                                                     onClick={() => {
                                                         setEditingCustomer(customer);
                                                         setIsFormOpen(true);
                                                     }}
-                                                    className="p-2 bg-secondary/50 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
+                                                    className="p-1 bg-secondary/50 rounded hover:text-primary hover:bg-primary/10 transition-all"
                                                     title="Düzenle"
                                                 >
-                                                    <Edit size={16} />
+                                                    <Edit size={14} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(customer.id)}
-                                                    className="p-2 bg-secondary/50 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-all"
+                                                    className="p-1 bg-secondary/50 rounded hover:text-red-500 hover:bg-red-500/10 transition-all"
                                                     title="Sil"
                                                 >
-                                                    <Trash2 size={16} />
+                                                    <Trash2 size={14} />
                                                 </button>
                                             </div>
                                         </td>
@@ -217,6 +214,13 @@ import { X } from 'lucide-react';
 
 function CustomerForm({ customer, onClose }: { customer: CustomerDTO | null, onClose: () => void }) {
     const isEditing = !!customer;
+    const [storeCodes, setStoreCodes] = useState<string[]>([]);
+
+    React.useEffect(() => {
+        import('../../actions/customers').then(({ getStoreCodes }) => {
+            getStoreCodes().then(setStoreCodes);
+        });
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -265,23 +269,29 @@ function CustomerForm({ customer, onClose }: { customer: CustomerDTO | null, onC
                                 <input name="city" defaultValue={customer?.city} className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/50 outline-none" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Mağaza Kodu</label>
-                                <input name="storeCode" defaultValue={customer?.storeCode} className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/50 outline-none" />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">İlgili Kişi</label>
-                            <input name="contactName" defaultValue={customer?.contactName} className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/50 outline-none" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
                                 <label className="text-sm font-medium">Telefon</label>
                                 <input name="phone" defaultValue={customer?.phone} className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/50 outline-none" />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">E-posta</label>
-                                <input name="email" type="email" defaultValue={customer?.email} className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/50 outline-none" />
-                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Mağaza Kodu</label>
+                            <input
+                                name="storeCode"
+                                defaultValue={customer?.storeCode}
+                                list="storeCodesList"
+                                className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/50 outline-none"
+                                placeholder="Kod ara..."
+                                autoComplete="off"
+                            />
+                            <datalist id="storeCodesList">
+                                {storeCodes.map(code => (
+                                    <option key={code} value={code} />
+                                ))}
+                            </datalist>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">E-posta</label>
+                            <input name="email" type="email" defaultValue={customer?.email} className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/50 outline-none" />
                         </div>
 
                         <div className="pt-4 flex justify-end gap-3">
@@ -294,7 +304,7 @@ function CustomerForm({ customer, onClose }: { customer: CustomerDTO | null, onC
                         </div>
                     </form>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

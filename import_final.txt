@@ -1,0 +1,168 @@
+prisma:warn In production, we recommend using `prisma generate --no-engine` (See: `prisma generate --help`)
+Found 25 valid sheets: [
+  '2024 January',   '2024 February',
+  '2024 April',     '2024 May',
+  '2024 March',     '2024 June',
+  '2024 July',      '2024 August',
+  '2024 September', '2024 October',
+  '2024 November',  '2024 December',
+  '2025 January',   '2025 February',
+  '2025 March',     '2025 April',
+  '2025 May',       '2025 August',
+  '2025 June',      '2025 July',
+  '2025 September', '2025 October',
+  '2025 November',  '2025 December',
+  '2026 January'
+]
+Pre-fetching Customers and Products for cache...
+Clearing existing data for 2024-1...
+Upserting Target for 2024-1: Target=775000, Success=527892.5
+Processed 50 records... (Last: 2024-01-08T12:00:00.000Z)
+Processed 100 records... (Last: 2024-01-19T12:00:00.000Z)
+Clearing existing data for 2024-2...
+Upserting Target for 2024-2: Target=600000, Success=492145
+Processed 150 records... (Last: 2024-02-01T12:00:00.000Z)
+Processed 200 records... (Last: 2024-02-07T12:00:00.000Z)
+Processed 250 records... (Last: 2024-02-16T12:00:00.000Z)
+Processed 300 records... (Last: 2024-02-27T12:00:00.000Z)
+Clearing existing data for 2024-4...
+Upserting Target for 2024-4: Target=550000, Success=425392.5
+Processed 350 records... (Last: 2024-04-06T00:00:00.000Z)
+Processed 400 records... (Last: 2024-04-22T00:00:00.000Z)
+Clearing existing data for 2024-5...
+Upserting Target for 2024-5: Target=550000, Success=591840
+Processed 450 records... (Last: 2024-05-04T00:00:00.000Z)
+Processed 500 records... (Last: 2024-05-14T00:00:00.000Z)
+CORRECTING Row 130: Year Mismatch in 2024 May. Changing 2025 -> 2024. Raw Date: 25.05.2025
+Processed 550 records... (Last: 2024-05-25T00:00:00.000Z)
+Clearing existing data for 2024-3...
+Upserting Target for 2024-3: Target=550000, Success=489990
+Processed 600 records... (Last: 2024-03-07T00:00:00.000Z)
+Processed 650 records... (Last: 2024-03-15T12:00:00.000Z)
+Processed 700 records... (Last: 2024-03-25T12:00:00.000Z)
+Clearing existing data for 2024-6...
+Upserting Target for 2024-6: Target=550000, Success=447242
+Processed 750 records... (Last: 2024-06-06T00:00:00.000Z)
+CORRECTING Row 54: Year Mismatch in 2024 June. Changing 2025 -> 2024. Raw Date: 11.06.2025
+Processed 800 records... (Last: 2024-06-25T00:00:00.000Z)
+Clearing existing data for 2024-7...
+Upserting Target for 2024-7: Target=550000, Success=553252
+Processed 850 records... (Last: 2024-07-08T00:00:00.000Z)
+Processed 900 records... (Last: 2024-07-22T00:00:00.000Z)
+Clearing existing data for 2024-8...
+Upserting Target for 2024-8: Target=639475, Success=657598
+Processed 950 records... (Last: 2024-08-05T12:00:00.000Z)
+Processed 1000 records... (Last: 2024-08-12T00:00:00.000Z)
+Processed 1050 records... (Last: 2024-08-26T00:00:00.000Z)
+Clearing existing data for 2024-9...
+Upserting Target for 2024-9: Target=686000, Success=567666
+Processed 1100 records... (Last: 2024-09-03T12:00:00.000Z)
+CORRECTING Row 63: Year Mismatch in 2024 September. Changing 2025 -> 2024. Raw Date: 11.09.2025
+Processed 1150 records... (Last: 2024-09-12T00:00:00.000Z)
+CORRECTING Row 87: Year Mismatch in 2024 September. Changing 2025 -> 2024. Raw Date: 16.09.2025
+Processed 1200 records... (Last: 2024-09-23T00:00:00.000Z)
+Clearing existing data for 2024-10...
+Upserting Target for 2024-10: Target=700000, Success=709765.5
+Processed 1250 records... (Last: 2024-10-07T00:00:00.000Z)
+Processed 1300 records... (Last: 2024-10-15T00:00:00.000Z)
+Processed 1350 records... (Last: 2024-10-21T00:00:00.000Z)
+CORRECTING Row 137: Year Mismatch in 2024 October. Changing 2025 -> 2024. Raw Date: 22.10.2025
+Clearing existing data for 2024-11...
+Upserting Target for 2024-11: Target=700000, Success=952442
+Processed 1400 records... (Last: 2024-11-01T12:00:00.000Z)
+Processed 1450 records... (Last: 2024-11-06T00:00:00.000Z)
+Processed 1500 records... (Last: 2024-11-15T00:00:00.000Z)
+Processed 1550 records... (Last: 2024-11-25T00:00:00.000Z)
+CORRECTING Row 198: Year Mismatch in 2024 November. Changing 2025 -> 2024. Raw Date: 29.11.2025
+Processed 1600 records... (Last: 2024-11-30T00:00:00.000Z)
+Clearing existing data for 2024-12...
+Upserting Target for 2024-12: Target=800000, Success=723693.5
+Processed 1650 records... (Last: 2024-12-09T00:00:00.000Z)
+CORRECTING Row 86: Year Mismatch in 2024 December. Changing 2025 -> 2024. Raw Date: 16.12.2025
+CORRECTING Row 89: Year Mismatch in 2024 December. Changing 2025 -> 2024. Raw Date: 16.12.2025
+Processed 1700 records... (Last: 2024-12-18T00:00:00.000Z)
+CORRECTING Row 140: Year Mismatch in 2024 December. Changing 2025 -> 2024. Raw Date: 25.12.2025
+Processed 1750 records... (Last: 2024-12-28T00:00:00.000Z)
+Clearing existing data for 2025-1...
+Upserting Target for 2025-1: Target=800000, Success=799810.5
+CORRECTING Row 22: Year Mismatch in 2025 January. Changing 2024 -> 2025. Raw Date: 06.01.2024
+CORRECTING Row 37: Year Mismatch in 2025 January. Changing 2024 -> 2025. Raw Date: 07.01.2024
+CORRECTING Row 49: Year Mismatch in 2025 January. Changing 2024 -> 2025. Raw Date: 10.01.2024
+Processed 1800 records... (Last: 2025-01-10T00:00:00.000Z)
+CORRECTING Row 50: Year Mismatch in 2025 January. Changing 2024 -> 2025. Raw Date: 10.01.2024
+Processed 1850 records... (Last: 2025-01-16T00:00:00.000Z)
+CORRECTING Row 103: Year Mismatch in 2025 January. Changing 2024 -> 2025. Raw Date: 17.01.2024
+CORRECTING Row 104: Year Mismatch in 2025 January. Changing 2024 -> 2025. Raw Date: 17.01.2024
+CORRECTING Row 105: Year Mismatch in 2025 January. Changing 2024 -> 2025. Raw Date: 17.01.2024
+Processed 1900 records... (Last: 2025-01-31T00:00:00.000Z)
+CORRECTING Row 153: Year Mismatch in 2025 January. Changing 2024 -> 2025. Raw Date: 31.01.2024
+CORRECTING Row 155: Year Mismatch in 2025 January. Changing 2024 -> 2025. Raw Date: 31.01.2024
+Clearing existing data for 2025-2...
+Upserting Target for 2025-2: Target=850000, Success=902849
+Processed 1950 records... (Last: 2025-02-05T00:00:00.000Z)
+Processed 2000 records... (Last: 2025-02-12T00:00:00.000Z)
+CORRECTING Row 146: Year Mismatch in 2025 February. Changing 2024 -> 2025. Raw Date: 18.02.2024
+Processed 2050 records... (Last: 2025-02-18T00:00:00.000Z)
+Clearing existing data for 2025-3...
+Upserting Target for 2025-3: Target=875000, Success=801554
+Processed 2100 records... (Last: 2025-03-03T00:00:00.000Z)
+Processed 2150 records... (Last: 2025-03-10T00:00:00.000Z)
+Processed 2200 records... (Last: 2025-03-18T00:00:00.000Z)
+Processed 2250 records... (Last: 2025-03-24T00:00:00.000Z)
+Clearing existing data for 2025-4...
+Upserting Target for 2025-4: Target=900000, Success=1071425
+Processed 2300 records... (Last: 2025-04-07T00:00:00.000Z)
+Processed 2350 records... (Last: 2025-04-10T00:00:00.000Z)
+CORRECTING Row 76: Year Mismatch in 2025 April. Changing 2024 -> 2025. Raw Date: 10.04.2024
+Processed 2400 records... (Last: 2025-04-14T00:00:00.000Z)
+CORRECTING Row 142: Year Mismatch in 2025 April. Changing 2024 -> 2025. Raw Date: 17.04.2024
+CORRECTING Row 143: Year Mismatch in 2025 April. Changing 2024 -> 2025. Raw Date: 17.04.2024
+CORRECTING Row 144: Year Mismatch in 2025 April. Changing 2024 -> 2025. Raw Date: 17.04.2024
+CORRECTING Row 145: Year Mismatch in 2025 April. Changing 2024 -> 2025. Raw Date: 17.04.2024
+Processed 2450 records... (Last: 2025-04-26T00:00:00.000Z)
+CORRECTING Row 179: Year Mismatch in 2025 April. Changing 2024 -> 2025. Raw Date: 28.04.2024
+Clearing existing data for 2025-5...
+Upserting Target for 2025-5: Target=925000, Success=912921.05
+CORRECTING Row 31: Year Mismatch in 2025 May. Changing 2024 -> 2025. Raw Date: 05.05.2024
+Processed 2500 records... (Last: 2025-05-05T00:00:00.000Z)
+Processed 2550 records... (Last: 2025-05-14T00:00:00.000Z)
+Processed 2600 records... (Last: 2025-05-27T00:00:00.000Z)
+Clearing existing data for 2025-8...
+Upserting Target for 2025-8: Target=900000, Success=640740
+Processed 2650 records... (Last: 2025-08-07T00:00:00.000Z)
+Processed 2700 records... (Last: 2025-08-18T00:00:00.000Z)
+Clearing existing data for 2025-6...
+Upserting Target for 2025-6: Target=850000, Success=804148.5
+Processed 2750 records... (Last: 2025-06-03T00:00:00.000Z)
+Processed 2800 records... (Last: 2025-06-14T00:00:00.000Z)
+CORRECTING Row 95: Year Mismatch in 2025 June. Changing 2024 -> 2025. Raw Date: 16.06.2024
+Processed 2850 records... (Last: 2025-06-21T00:00:00.000Z)
+Clearing existing data for 2025-7...
+Upserting Target for 2025-7: Target=900000, Success=817073.5
+Processed 2900 records... (Last: 2025-07-03T00:00:00.000Z)
+Processed 2950 records... (Last: 2025-07-11T00:00:00.000Z)
+Processed 3000 records... (Last: 2025-07-21T00:00:00.000Z)
+Processed 3050 records... (Last: 2025-07-30T00:00:00.000Z)
+Clearing existing data for 2025-9...
+Upserting Target for 2025-9: Target=800000, Success=1023257.5
+Processed 3100 records... (Last: 2025-09-10T00:00:00.000Z)
+Processed 3150 records... (Last: 2025-09-22T00:00:00.000Z)
+Clearing existing data for 2025-10...
+Upserting Target for 2025-10: Target=1300000, Success=1163570.06
+Processed 3200 records... (Last: 2025-10-02T00:00:00.000Z)
+Processed 3250 records... (Last: 2025-10-10T00:00:00.000Z)
+Processed 3300 records... (Last: 2025-10-17T00:00:00.000Z)
+Processed 3350 records... (Last: 2025-10-25T00:00:00.000Z)
+Clearing existing data for 2025-11...
+Upserting Target for 2025-11: Target=1300000, Success=964159.7
+Processed 3400 records... (Last: 2025-11-03T00:00:00.000Z)
+Processed 3450 records... (Last: 2025-11-10T00:00:00.000Z)
+Processed 3500 records... (Last: 2025-11-19T00:00:00.000Z)
+Clearing existing data for 2025-12...
+Upserting Target for 2025-12: Target=1275000, Success=1091870
+Processed 3550 records... (Last: 2025-12-01T00:00:00.000Z)
+Processed 3600 records... (Last: 2025-12-09T00:00:00.000Z)
+Processed 3650 records... (Last: 2025-12-18T00:00:00.000Z)
+Processed 3700 records... (Last: 2025-12-30T00:00:00.000Z)
+Skipping 2026 January to protect manually seeded data.
+Success! Total imported: 3701

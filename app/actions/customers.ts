@@ -156,3 +156,16 @@ export async function getCustomerProfile(name: string) {
         return null;
     }
 }
+
+export async function getStoreCodes() {
+    try {
+        const stores = await prisma.store.findMany({
+            select: { code: true },
+            orderBy: { code: 'asc' }
+        });
+        return stores.map(s => s.code);
+    } catch (error) {
+        console.error("Failed to fetch store codes:", error);
+        return [];
+    }
+}

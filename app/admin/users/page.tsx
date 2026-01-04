@@ -18,12 +18,7 @@ export default async function UsersPage() {
 
     return (
         <div className="space-y-8 p-8">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Kullanıcı Yönetimi</h1>
-                    <p className="text-muted-foreground">Sisteme erişimi olan kullanıcıları yönetin.</p>
-                </div>
-            </div>
+
 
             <div className="grid lg:grid-cols-3 gap-8">
                 {/* User List */}

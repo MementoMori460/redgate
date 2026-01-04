@@ -417,6 +417,23 @@ export async function getStoreByCode(code: string) {
         return store;
     } catch (error) {
         console.error("Failed to fetch store:", error);
+    }
+}
+
+export async function getMonthlyTarget(month: number, year: number) {
+    'use server';
+    try {
+        const target = await prisma.monthlyTarget.findUnique({
+            where: {
+                month_year: {
+                    month,
+                    year
+                }
+            }
+        });
+        return target ? { target: target.target.toNumber(), success: target.success?.toNumber() || 0 } : null;
+    } catch (error) {
+        console.error("Failed to fetch monthly target:", error);
         return null;
     }
 }

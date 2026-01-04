@@ -55,4 +55,46 @@ body {
   background: var(--background);
   color: var(--foreground);
   min-height: 100vh;
+  font-size: 0.875rem;
+  /* 14px base size */
+}
+
+/* Compact Table Styles */
+@layer utilities {
+
+  .compact-table th,
+  .compact-table td {
+    @apply py-1 px-2 text-xs h-8;
+    /* Tighter padding, smaller text, fixed height */
+  }
+
+  .compact-text {
+    @apply text-xs leading-4;
+  }
+}
+
+/* Global Table Compact Override (if not using specific class) */
+td,
+th {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  font-size: 0.8rem;
+  /* Even smaller for dense data */
+}
+
+/* Mobile Sidebar Helpers */
+@media (max-width: 768px) {
+  .sidebar-mobile-hidden {
+    transform: translateX(-100%);
+    position: fixed;
+    height: 100vh;
+    z-index: 50;
+  }
+
+  .sidebar-mobile-visible {
+    transform: translateX(0);
+    position: fixed;
+    height: 100vh;
+    z-index: 50;
+  }
 }
