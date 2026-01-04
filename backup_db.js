@@ -22,24 +22,30 @@ async function main() {
         console.log('Fetching Sales (this may take a moment)...');
         const sales = await prisma.sale.findMany();
 
+        console.log('Fetching Monthly Targets...');
+        const monthlyTargets = await prisma.monthlyTarget.findMany();
+
         const backupData = {
             timestamp: new Date().toISOString(),
             counts: {
                 stores: stores.length,
                 customers: customers.length,
                 products: products.length,
-                sales: sales.length
+                sales: sales.length,
+                monthlyTargets: monthlyTargets.length
             },
             data: {
                 stores,
                 customers,
                 products,
-                sales
+                sales,
+                monthlyTargets
             }
         };
 
         // Determine desktop path
-        const desktopPath = path.join('/Users/ydmacm1/Desktop', 'redgate_backup_20260104.json');
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const desktopPath = path.join('/Users/ydmacm1/Desktop', `redgate_FULL_backup_${timestamp}.json`);
 
         console.log(`Writing backup to ${desktopPath}...`);
         fs.writeFileSync(desktopPath, JSON.stringify(backupData, null, 2));
