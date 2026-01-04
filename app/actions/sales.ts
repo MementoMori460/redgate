@@ -13,10 +13,10 @@ export type SaleDTO = {
     city: string
     storeName: string
     salesPerson: string
-    customerName?: string
-    customerContact?: string
-    email?: string // New field
-    customerId?: string // New field
+    customerName?: string | null
+    customerContact?: string | null
+    email?: string | null // New field
+    customerId?: string | null // New field
     item: string
     price: number
     quantity: number
@@ -24,10 +24,10 @@ export type SaleDTO = {
     profit: number
     isShipped?: boolean
     status?: string
-    description?: string
-    waybillNumber?: string
-    invoiceNumber?: string
-    paymentStatus?: string
+    description?: string | null
+    waybillNumber?: string | null
+    invoiceNumber?: string | null
+    paymentStatus?: string | null
 }
 
 export async function getSales() {
