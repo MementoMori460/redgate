@@ -153,12 +153,8 @@ export async function createSale(data: SaleDTO) {
         console.error("Failed to create sale:", error)
         return { success: false, error: "Failed to create sale" }
     }
-    return { success: true, data: serializedSale }
-} catch (error) {
-    console.error("Failed to create sale:", error)
-    return { success: false, error: "Failed to create sale" }
 }
-}
+
 
 export async function createBatchSale(sales: SaleDTO[]) {
     try {
