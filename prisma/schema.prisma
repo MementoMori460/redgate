@@ -4,8 +4,8 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("POSTGRES_URL_NON_POOLING") // Bypass Prisma Proxy limit
-  directUrl = env("POSTGRES_URL_NON_POOLING")
+  url       = env("POSTGRES_URL") // Use standard Vercel variable
+  directUrl = env("POSTGRES_URL_NON_POOLING") // Optional: Keep for direct access if available, or fallback to same if I could.
 }
 
 model Customer {
