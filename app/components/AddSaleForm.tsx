@@ -1,15 +1,18 @@
 'use client';
 
-import { X, Search, User as UserIcon, Package } from 'lucide-react';
+import { X, Search, User as UserIcon, Package, Plus } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { createSale, getStores, getCustomers } from '../actions/sales';
+import { createSale, getStores } from '../actions/sales';
+import { getCustomers } from '../actions/customers';
 import { User } from 'next-auth';
 import { getUsers } from '../actions/users';
 import { getProducts, ProductDTO } from '../actions/products';
 
+import { useRole } from '../contexts/RoleContext';
+
 interface AddSaleFormProps {
     onClose: () => void;
-    user?: User;
+    user?: User; // Keeping for compatibility but will prefer context
 }
 
 type Store = {
@@ -27,11 +30,15 @@ type UserType = {
 };
 
 type Customer = {
+    id: string;
     name: string;
     contact: string;
+    email: string;
+    city?: string;
 };
 
 export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
+    const { role, currentUser } = useRole();
     const [quantity, setQuantity] = useState<number>(1);
     const [unitPrice, setUnitPrice] = useState<number>(0);
     const [cost, setCost] = useState<number>(0);
@@ -50,6 +57,7 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
     // Customer Logic
     const [customerName, setCustomerName] = useState('');
     const [customerContact, setCustomerContact] = useState('');
+    const [customerEmail, setCustomerEmail] = useState('');
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
     const [showCustomerSuggestions, setShowCustomerSuggestions] = useState(false);
@@ -71,13 +79,21 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
 
     useEffect(() => {
         getStores().then(setStores);
-        getCustomers().then(setCustomers);
+        getCustomers().then(rawCustomers => {
+            setCustomers(rawCustomers.map((c: any) => ({
+                id: c.id,
+                name: c.name,
+                contact: c.phone || '', // Map phone to contact for now
+                email: c.email || '',
+                city: c.city || ''
+            })));
+        });
         getProducts().then(setProducts);
 
         // Setup based on role
-        if (user?.role === 'SALES') {
-            setSalesPerson(user.name || '');
-        } else if (user?.role === 'ADMIN' || user?.role === 'WAREHOUSE' || user?.role === 'ACCOUNTANT') {
+        if (role === 'sales') {
+            setSalesPerson(currentUser || '');
+        } else if (role === 'admin' || role === 'warehouse' || role === 'accountant' || role === 'manager') {
             getUsers().then(users => {
                 setSalesPersons(users as UserType[]);
             });
@@ -97,7 +113,7 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
         }
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [user]);
+    }, [role, currentUser]);
 
     const handleCustomerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -113,6 +129,7 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
     const selectCustomer = (customer: Customer) => {
         setCustomerName(customer.name);
         setCustomerContact(customer.contact);
+        setCustomerEmail(customer.email);
         setShowCustomerSuggestions(false);
     };
 
@@ -184,18 +201,20 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
 
             await createSale({
                 date: rawData.date as string,
-                storeCode: storeCode, // Use state
-                region: region,       // Use state
-                city: city,          // Use state
-                storeName: storeName, // Use state
-                salesPerson: salesPerson, // Use state
-                customerName: customerName,
+                storeCode: storeCode,
+                region: region,
+                city: city,
+                storeName: storeName,
+                salesPerson: salesPerson,
+                customerName: customerName.trim(), // Trim extra spaces
                 customerContact: customerContact,
-                item: itemName, // Use state
+                email: customerEmail,
+                item: itemName,
                 quantity: quantity,
-                price: calculateDiscountedPrice(), // Use discounted price as the effective unit price for the record
+                price: calculateDiscountedPrice(),
                 total: totalPrice,
                 profit: netProfit,
+                description: rawData.description as string,
             });
 
             onClose();
@@ -293,10 +312,15 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
                         </div>
 
                         {/* Customer & SalesPerson Section */}
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-4 border-t border-border/50 pt-4">
+                            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                <UserIcon size={16} />
+                                Müşteri Bilgileri
+                            </h3>
+
                             {/* Customer Autocomplete */}
                             <div className="space-y-2 relative" ref={customerWrapperRef}>
-                                <label className="text-sm font-medium text-secondary-foreground">Müşteri (Opsiyonel)</label>
+                                <label className="text-sm font-medium text-secondary-foreground">Müşteri Adı</label>
                                 <div className="relative">
                                     <input
                                         type="text"
@@ -307,7 +331,7 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
                                             if (!customerName) setFilteredCustomers(customers);
                                             setShowCustomerSuggestions(true);
                                         }}
-                                        placeholder="Müşteri Adı..."
+                                        placeholder="Müşteri Adı Ara veya Yeni Yaz..."
                                         autoComplete="off"
                                         className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 pl-10 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all"
                                     />
@@ -322,28 +346,49 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
                                                 className="p-3 hover:bg-secondary/50 cursor-pointer border-b border-border/50 last:border-0"
                                             >
                                                 <div className="font-medium">{c.name}</div>
+                                                <div className="text-xs text-muted-foreground">{c.city} • {c.contact}</div>
                                             </div>
                                         ))}
                                     </div>
                                 )}
+                                {customerName && !customers.some(c => c.name.toLowerCase() === customerName.toLowerCase()) && (
+                                    <div className="text-xs text-blue-500 font-medium mt-1 ml-1 flex items-center gap-1">
+                                        <Plus size={12} />
+                                        Yeni Müşteri Kaydı Oluşturulacak
+                                    </div>
+                                )}
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-secondary-foreground">İletişim/Tel (Opsiyonel)</label>
-                                <input
-                                    type="text"
-                                    name="customerContact"
-                                    value={customerContact}
-                                    onChange={(e) => setCustomerContact(e.target.value)}
-                                    placeholder="05XX..."
-                                    className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all"
-                                />
+
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-secondary-foreground">İletişim/Tel</label>
+                                    <input
+                                        type="text"
+                                        name="customerContact"
+                                        value={customerContact}
+                                        onChange={(e) => setCustomerContact(e.target.value)}
+                                        placeholder="05XX..."
+                                        className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-secondary-foreground">E-posta</label>
+                                    <input
+                                        type="email"
+                                        name="customerEmail"
+                                        value={customerEmail}
+                                        onChange={(e) => setCustomerEmail(e.target.value)}
+                                        placeholder="ornek@email.com"
+                                        className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all"
+                                    />
+                                </div>
                             </div>
                         </div>
 
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-secondary-foreground">Satış Personeli</label>
-                            {user?.role === 'SALES' ? (
+                            {role === 'sales' ? (
                                 <input
                                     type="text"
                                     name="salesPerson"
@@ -474,6 +519,15 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
                                     {calculateDiscountedPrice().toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-secondary-foreground">Açıklama / Not</label>
+                            <textarea
+                                name="description"
+                                className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all resize-none h-20"
+                                placeholder="Sipariş notu..."
+                            />
                         </div>
 
                         <div className="grid grid-cols-2 gap-6">

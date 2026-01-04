@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
+import { toTitleCaseTR } from "@/lib/utils"
 import { auth } from "@/auth"
 
 export type SaleDTO = {
@@ -14,6 +15,8 @@ export type SaleDTO = {
     salesPerson: string
     customerName?: string
     customerContact?: string
+    email?: string // New field
+    customerId?: string // New field
     item: string
     price: number
     quantity: number
@@ -81,16 +84,44 @@ export async function getSales() {
 
 export async function createSale(data: SaleDTO) {
     try {
+        let customerId = data.customerId;
+
+        // Auto-link or Create Customer if name provided
+        if (data.customerName && !customerId) {
+            // 1. Try to find by name
+            const existingCustomer = await prisma.customer.findFirst({
+                where: { name: data.customerName }
+            });
+
+            if (existingCustomer) {
+                customerId = existingCustomer.id;
+            } else {
+                // 2. Create if not exists (Quick Register)
+                const newCustomer = await prisma.customer.create({
+                    data: {
+                        name: data.customerName,
+                        contactName: data.customerName, // Use name as contact person too by default
+                        phone: data.customerContact,
+                        email: data.email, // Save email if provided
+                        city: data.city, // Infer city from sale
+                        storeCode: data.storeCode !== 'ONLINE' ? data.storeCode : undefined,
+                    }
+                });
+                customerId = newCustomer.id;
+            }
+        }
+
         const newSale = await prisma.sale.create({
             data: {
                 date: new Date(data.date),
                 storeCode: data.storeCode,
-                region: data.region,
-                city: data.city,
+                region: toTitleCaseTR(data.region),
+                city: toTitleCaseTR(data.city),
                 storeName: data.storeName,
                 salesPerson: data.salesPerson,
-                customerName: data.customerName,
+                customerName: toTitleCaseTR(data.customerName || ''),
                 customerContact: data.customerContact,
+                customerId: customerId, // Link to customer
                 item: data.item,
                 price: data.price,
                 quantity: data.quantity,
@@ -122,6 +153,78 @@ export async function createSale(data: SaleDTO) {
         console.error("Failed to create sale:", error)
         return { success: false, error: "Failed to create sale" }
     }
+    return { success: true, data: serializedSale }
+} catch (error) {
+    console.error("Failed to create sale:", error)
+    return { success: false, error: "Failed to create sale" }
+}
+}
+
+export async function createBatchSale(sales: SaleDTO[]) {
+    try {
+        if (sales.length === 0) return { success: false, error: "No items in batch" };
+
+        let customerId = sales[0].customerId;
+        const customerName = sales[0].customerName;
+
+        // Auto-link logic (simplified reuse from createSale or just trust the first item's resolution)
+        if (customerName && !customerId) {
+            const existingCustomer = await prisma.customer.findFirst({ where: { name: customerName } });
+            if (existingCustomer) {
+                customerId = existingCustomer.id;
+            } else {
+                const newCustomer = await prisma.customer.create({
+                    data: {
+                        name: customerName,
+                        contactName: customerName,
+                        city: sales[0].city,
+                        storeCode: sales[0].storeCode !== 'ONLINE' ? sales[0].storeCode : undefined,
+                    }
+                });
+                customerId = newCustomer.id;
+            }
+        }
+
+        const createdSales = await prisma.$transaction(
+            sales.map(data => prisma.sale.create({
+                data: {
+                    date: new Date(data.date),
+                    storeCode: data.storeCode,
+                    region: toTitleCaseTR(data.region),
+                    city: toTitleCaseTR(data.city),
+                    storeName: data.storeName,
+                    salesPerson: data.salesPerson,
+                    customerName: toTitleCaseTR(data.customerName || ''),
+                    customerContact: data.customerContact,
+                    customerId: customerId,
+                    item: data.item, // Product Name
+                    price: data.price,
+                    quantity: data.quantity,
+                    total: data.total,
+                    profit: data.profit,
+                    isShipped: false,
+                    status: 'PENDING',
+                    description: data.description,
+                }
+            }))
+        );
+
+        // Send Batch Notification
+        // We'll implement a batch email trigger here
+        // sendBatchOrderEmailToAdmins(createdSales).catch(console.error);
+        if (createdSales.length > 0) {
+            // For now, simpler: trigger individual for first one or just one summary
+            // Implementing summary is better.
+            // I'll call a new notification function.
+            sendBatchOrderEmailToAdmins(createdSales).catch(err => console.error("Batch email failed", err));
+        }
+
+        revalidatePath('/');
+        return { success: true, count: createdSales.length };
+    } catch (error) {
+        console.error("Failed to create batch sale:", error);
+        return { success: false, error: "Toplu sipariş oluşturulamadı." };
+    }
 }
 
 export async function updateSale(id: string, data: Partial<SaleDTO>) {
@@ -143,8 +246,25 @@ export async function updateSale(id: string, data: Partial<SaleDTO>) {
             sendShippingEmail(id).catch(err => console.error("Failed to trigger email:", err));
         }
 
+        // Serialize for client
+        const serializedSale = {
+            ...updatedSale,
+            date: updatedSale.date.toISOString().split('T')[0],
+            createdAt: updatedSale.createdAt.toISOString(),
+            updatedAt: updatedSale.updatedAt.toISOString(),
+            customerName: updatedSale.customerName || '',
+            customerContact: updatedSale.customerContact || '',
+            price: updatedSale.price.toNumber(),
+            total: updatedSale.total.toNumber(),
+            profit: updatedSale.profit.toNumber(),
+            description: updatedSale.description || '',
+            waybillNumber: updatedSale.waybillNumber || '',
+            invoiceNumber: updatedSale.invoiceNumber || '',
+            paymentStatus: updatedSale.paymentStatus || '',
+        }
+
         revalidatePath('/')
-        return { success: true, data: updatedSale }
+        return { success: true, data: serializedSale }
     } catch (error) {
         console.error("Failed to update sale:", error)
         return { success: false, error: "Failed to update sale" }
@@ -164,7 +284,7 @@ export async function deleteSale(id: string) {
     }
 }
 
-import { sendShippingEmail } from "../utils/notifications";
+import { sendShippingEmail, sendNewOrderEmailToAdmins, sendBatchOrderEmailToAdmins } from "../utils/notifications";
 
 export async function shipSale(id: string, shippedQuantity: number, waybillNumber: string) {
     try {

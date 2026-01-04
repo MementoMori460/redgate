@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { SaleDTO, deleteSale, shipSale, markSaleAsPaid } from '../actions/sales';
 import { EditSaleModal } from '../components/EditSaleModal';
 import { Search, Calendar, Filter, ArrowRight, ArrowLeft, MoreHorizontal, Download, Truck, CreditCard, FileText, Trash2, Edit } from 'lucide-react';
@@ -13,10 +14,17 @@ interface SalesHistoryClientProps {
 
 export function SalesHistoryClient({ initialSales }: SalesHistoryClientProps) {
     const { role, currentUser } = useRole();
+    const searchParams = useSearchParams();
     const [sales, setSales] = useState(initialSales);
     const [search, setSearch] = useState('');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [regionFilter, setRegionFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState<string | null>(null);
+
+    useEffect(() => {
+        const filter = searchParams.get('filter');
+        setStatusFilter(filter);
+    }, [searchParams]);
 
     // Shipment Modal State
     const [shipModalOpen, setShipModalOpen] = useState(false);
@@ -105,7 +113,6 @@ export function SalesHistoryClient({ initialSales }: SalesHistoryClientProps) {
 
     const filteredSales = sales.filter(sale => {
         // Enforce RBAC for row filters as well, just in case
-        if (role === 'sales' && sale.salesPerson !== currentUser) return false;
         if (role === 'customer') return sale.customerName === currentUser || sale.customerName === null;
 
         const matchesSearch =
@@ -116,29 +123,37 @@ export function SalesHistoryClient({ initialSales }: SalesHistoryClientProps) {
 
         const saleDate = new Date(sale.date);
 
-        // Month Filter Logic (Overrides manual date range if not set, or works alongside? 
-        // User asked for "Previous/Next Month" navigation which typically implies viewing ONE month at a time.
-        // So I will make this the primary date filter unless manual dates are specified?)
-        // actually, usually Month Nav replaces manual date pickers or acts as a preset. 
-        // Let's make it strict: If manual Date Range is empty, use Month Nav. 
-        // If Manual Date Range is SET, ignore Month Nav? Or prioritize Month Nav?
-        // "bu ayarı... istiyorum" implies the excel-like nav. 
-        // Let's use Month Nav as the primary view.
-        // It implies `startDate` and `endDate` states might be redundant or supplementary.
-        // To avoid confusion, I will filter by month strictly for now as per the "excel-like" request.
+        // Status Filter Logic
+        let matchesStatus = true;
+        let ignoreDateFilter = false;
+
+        if (statusFilter === 'late') {
+            // Late: Unshipped AND Before Today
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            matchesStatus = !sale.isShipped && saleDate < today;
+            ignoreDateFilter = true; // Show all late orders regardless of month
+        } else if (statusFilter === 'unshipped') {
+            // Unshipped: Just !isShipped
+            matchesStatus = !sale.isShipped;
+            ignoreDateFilter = true; // Show backlog
+        } else if (statusFilter === 'shipped') {
+            // Shipped Today
+            const todayStr = new Date().toISOString().split('T')[0];
+            // Assuming sale.date is YYYY-MM-DD string or compatible
+            // Safety check for date types
+            const sDate = typeof sale.date === 'string' ? sale.date : saleDate.toISOString().split('T')[0];
+            matchesStatus = (sale.isShipped || false) && sDate === todayStr;
+            ignoreDateFilter = true;
+        }
 
         const matchesMonth =
             saleDate.getMonth() === currentDate.getMonth() &&
             saleDate.getFullYear() === currentDate.getFullYear();
 
-        // const start = startDate ? new Date(startDate) : null;
-        // const end = endDate ? new Date(endDate) : null;
-        // const matchesDate = (!start || saleDate >= start) && (!end || saleDate <= end);
-        // I will temporarily comment out manual date range to prioritize the new requirement
-
         const matchesRegion = !regionFilter || sale.region === regionFilter;
 
-        return matchesSearch && matchesMonth && matchesRegion;
+        return matchesSearch && matchesRegion && matchesStatus && (ignoreDateFilter || matchesMonth);
     });
 
     const uniqueRegions = Array.from(new Set(initialSales.map(s => s.region)));
@@ -163,69 +178,96 @@ export function SalesHistoryClient({ initialSales }: SalesHistoryClientProps) {
                             className="w-full pl-9 pr-4 py-2 text-sm border border-border/50 rounded-lg bg-secondary/30 focus:ring-1 focus:ring-primary/50 outline-none transition-all"
                         />
                     </div>
-                    {/* Manual date inputs removed/hidden in favor of Month Nav as requested? 
-                        Or user might want both. User said "varsayılan olarak bu ay görülsün ama üstten sola bastıkca önceki aylar görünsün".
-                        This implies the Nav is the primary way to change time.
-                        I'll keep the region filter.
-                    */}
-                    <select
-                        value={regionFilter}
-                        onChange={(e) => setRegionFilter(e.target.value)}
-                        className="px-3 py-2 text-sm border border-border/50 rounded-lg bg-secondary/30 outline-none min-w-[150px]"
+                    {/* Manual date inputs removed/hidden in favor of Month Nav as requested */}
+                    {role !== 'customer' && (
+                        <select
+                            value={regionFilter}
+                            onChange={(e) => setRegionFilter(e.target.value)}
+                            className="px-3 py-2 text-sm border border-border/50 rounded-lg bg-secondary/30 outline-none min-w-[150px]"
+                        >
+                            <option value="">Tüm Bölgeler</option>
+                            {uniqueRegions.map(r => (
+                                <option key={r} value={r}>{r}</option>
+                            ))}
+                        </select>
+                    )}
+                </div>
+            </div>
+
+            {/* Status Filter Indicator */}
+            {statusFilter && (
+                <div className="bg-primary/10 border border-primary/20 text-primary px-4 py-2 rounded-lg text-sm flex items-center justify-between">
+                    <span className="font-medium">
+                        Filtre: {statusFilter === 'late' ? 'Geciken Siparişler' : statusFilter === 'unshipped' ? 'Bekleyen Siparişler' : statusFilter === 'shipped' ? 'Bugün Kargolananlar' : statusFilter}
+                    </span>
+                    <button
+                        onClick={() => {
+                            const url = new URL(window.location.href);
+                            url.searchParams.delete('filter');
+                            window.history.pushState({}, '', url);
+                            setStatusFilter(null);
+                        }}
+                        className="text-xs hover:underline ml-2"
                     >
-                        <option value="">Tüm Bölgeler</option>
-                        {uniqueRegions.map(r => (
-                            <option key={r} value={r}>{r}</option>
-                        ))}
-                    </select>
+                        Temizle
+                    </button>
                 </div>
-            </div>
+            )}
 
-            {/* Summary */}
-            <div className={`grid grid-cols-1 ${showPrices ? (showProfit ? 'md:grid-cols-3' : 'md:grid-cols-2') : 'md:grid-cols-1'} gap-4`}>
-                <div className="bg-card border border-border/50 rounded-xl p-4 flex items-center justify-between shadow-sm">
-                    <div>
-                        <p className="text-xs text-muted-foreground font-medium">Listelenen</p>
-                        <h3 className="text-xl font-bold mt-1">{filteredSales.length} <span className="text-xs font-normal text-muted-foreground">Satış</span></h3>
-                    </div>
-                </div>
-                {showPrices && (
+            {/* Summary - Hidden for Customer as per request */}
+            {role !== 'customer' && (
+                <div className={`grid grid-cols-1 ${showPrices ? (showProfit ? 'md:grid-cols-3' : 'md:grid-cols-2') : 'md:grid-cols-1'} gap-4`}>
                     <div className="bg-card border border-border/50 rounded-xl p-4 flex items-center justify-between shadow-sm">
                         <div>
-                            <p className="text-xs text-muted-foreground font-medium">Toplam Ciro</p>
-                            <h3 className="text-xl font-bold text-primary mt-1">{totalRevenue.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</h3>
+                            <p className="text-xs text-muted-foreground font-medium">Listelenen</p>
+                            <h3 className="text-xl font-bold mt-1">{filteredSales.length} <span className="text-xs font-normal text-muted-foreground">Satış</span></h3>
                         </div>
                     </div>
-                )}
-                {showProfit && (
-                    <div className="bg-card border border-border/50 rounded-xl p-4 flex items-center justify-between shadow-sm">
-                        <div>
-                            <p className="text-xs text-muted-foreground font-medium">Toplam Kar</p>
-                            <h3 className="text-xl font-bold text-green-600 mt-1">{totalProfit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</h3>
+                    {showPrices && (
+                        <div className="bg-card border border-border/50 rounded-xl p-4 flex items-center justify-between shadow-sm">
+                            <div>
+                                <p className="text-xs text-muted-foreground font-medium">Toplam Ciro</p>
+                                <h3 className="text-xl font-bold text-primary mt-1">{totalRevenue.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</h3>
+                            </div>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )}
+                    {showProfit && (
+                        <div className="bg-card border border-border/50 rounded-xl p-4 flex items-center justify-between shadow-sm">
+                            <div>
+                                <p className="text-xs text-muted-foreground font-medium">Toplam Kar</p>
+                                <h3 className="text-xl font-bold text-green-600 mt-1">{totalProfit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} ₺</h3>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
-            {/* Month Navigation & Table Header */}
+            {/* Month Navigation & Table Header - Hide Month Nav if global filter is active? */}
             <div className="flex items-center justify-between bg-card border border-border/50 rounded-t-xl p-2 border-b-0 shadow-sm mt-8">
-                <div className="flex items-center gap-2">
-                    <button onClick={handlePrevMonth} className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors">
-                        <ArrowLeft size={16} />
-                    </button>
-                    <span className="text-sm font-semibold min-w-[140px] text-center capitalize">{monthName}</span>
-                    <button onClick={handleNextMonth} className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors">
-                        <ArrowRight size={16} />
-                    </button>
-                    <div className="w-px h-6 bg-border mx-2" />
-                    <button onClick={handlePrevYear} className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors text-xs font-mono">
-                        {currentDate.getFullYear() - 1}
-                    </button>
-                    <span className="text-sm font-bold text-primary">{currentDate.getFullYear()}</span>
-                    <button onClick={handleNextYear} className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors text-xs font-mono">
-                        {currentDate.getFullYear() + 1}
-                    </button>
-                </div>
+                {statusFilter === 'late' || statusFilter === 'unshipped' ? (
+                    <div className="flex items-center gap-2 px-2">
+                        <span className="text-sm font-semibold text-primary">Tüm Zamanlar</span>
+                        <span className="text-xs text-muted-foreground">({statusFilter === 'late' ? 'Geciken' : 'Bekleyen'})</span>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-2">
+                        <button onClick={handlePrevMonth} className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors">
+                            <ArrowLeft size={16} />
+                        </button>
+                        <span className="text-sm font-semibold min-w-[140px] text-center capitalize">{monthName}</span>
+                        <button onClick={handleNextMonth} className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors">
+                            <ArrowRight size={16} />
+                        </button>
+                        <div className="w-px h-6 bg-border mx-2" />
+                        <button onClick={handlePrevYear} className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors text-xs font-mono">
+                            {currentDate.getFullYear() - 1}
+                        </button>
+                        <span className="text-sm font-bold text-primary">{currentDate.getFullYear()}</span>
+                        <button onClick={handleNextYear} className="p-2 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors text-xs font-mono">
+                            {currentDate.getFullYear() + 1}
+                        </button>
+                    </div>
+                )}
                 <div className="text-xs text-muted-foreground mr-2">
                     {filteredSales.length} kayıt
                 </div>
@@ -236,11 +278,12 @@ export function SalesHistoryClient({ initialSales }: SalesHistoryClientProps) {
                 <div className="overflow-x-auto">
                     <table className="w-full text-xs text-left">
                         <thead className="text-muted-foreground bg-secondary/20 border-b border-border/50 uppercase font-medium tracking-wide">
-                            <tr>
+                            <tr className="whitespace-nowrap">
                                 <th className="px-4 py-3 font-medium">Tarih</th>
                                 <th className="px-4 py-3 font-medium">Mağaza / Bölge</th>
                                 <th className="px-4 py-3 font-medium">Müşteri</th>
                                 <th className="px-4 py-3 font-medium">Ürün</th>
+                                <th className="px-4 py-3 font-medium">Not</th>
                                 <th className="px-4 py-3 font-medium">Plasiyer</th>
                                 <th className="px-4 py-3 font-medium text-center">Sevk Durumu</th>
                                 {(role === 'admin' || role === 'warehouse' || role === 'manager') && <th className="px-4 py-3 font-medium">İrsaliye</th>}
@@ -269,9 +312,12 @@ export function SalesHistoryClient({ initialSales }: SalesHistoryClientProps) {
                                     <td className="px-4 py-3 font-medium text-secondary-foreground whitespace-nowrap">
                                         {sale.customerName || '-'}
                                     </td>
-                                    <td className="px-4 py-3 text-foreground">{sale.item}</td>
-                                    <td className="px-4 py-3 text-muted-foreground">{sale.salesPerson}</td>
-                                    <td className="px-4 py-3 text-center">
+                                    <td className="px-4 py-3 text-foreground whitespace-nowrap">{sale.item}</td>
+                                    <td className="px-4 py-3 text-muted-foreground text-xs max-w-[150px] truncate" title={sale.description || ''}>
+                                        {sale.description || '-'}
+                                    </td>
+                                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{sale.salesPerson}</td>
+                                    <td className="px-4 py-3 text-center whitespace-nowrap">
                                         <span className={clsx(
                                             "px-2 py-0.5 text-[10px] uppercase font-bold rounded-full",
                                             sale.isShipped ? "bg-green-500/10 text-green-600" : "bg-yellow-500/10 text-yellow-600"
@@ -280,30 +326,30 @@ export function SalesHistoryClient({ initialSales }: SalesHistoryClientProps) {
                                         </span>
                                     </td>
                                     {(role === 'admin' || role === 'warehouse' || role === 'manager') && (
-                                        <td className="px-4 py-3 text-muted-foreground font-mono text-xs">
+                                        <td className="px-4 py-3 text-muted-foreground font-mono text-xs whitespace-nowrap">
                                             {sale.waybillNumber || '-'}
                                         </td>
                                     )}
 
-                                    <td className="px-4 py-3 text-right font-mono text-muted-foreground">{sale.quantity}</td>
+                                    <td className="px-4 py-3 text-right font-mono text-muted-foreground whitespace-nowrap">{sale.quantity}</td>
                                     {showPrices && (
                                         <>
-                                            <td className="px-4 py-3 text-right font-mono text-muted-foreground">
+                                            <td className="px-4 py-3 text-right font-mono text-muted-foreground whitespace-nowrap">
                                                 {sale.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
                                             </td>
-                                            <td className="px-4 py-3 text-right font-mono font-medium text-foreground">
+                                            <td className="px-4 py-3 text-right font-mono font-medium text-foreground whitespace-nowrap">
                                                 {sale.total.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
                                             </td>
                                         </>
                                     )}
                                     {showProfit && (
-                                        <td className={`px-4 py-3 text-right font-mono font-medium ${sale.profit >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                        <td className={`px-4 py-3 text-right font-mono font-medium whitespace-nowrap ${sale.profit >= 0 ? 'text-green-600' : 'text-red-500'}`}>
                                             {sale.profit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
                                         </td>
                                     )}
 
                                     {(role === 'admin' || role === 'accountant') && (
-                                        <td className="px-4 py-3 text-center">
+                                        <td className="px-4 py-3 text-center whitespace-nowrap">
                                             <span className={clsx(
                                                 "px-2 py-0.5 text-[10px] uppercase font-bold rounded-full",
                                                 sale.paymentStatus === 'PAID' ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-600"
@@ -313,12 +359,12 @@ export function SalesHistoryClient({ initialSales }: SalesHistoryClientProps) {
                                         </td>
                                     )}
                                     {(role === 'admin' || role === 'accountant') && (
-                                        <td className="px-4 py-3 text-muted-foreground font-mono text-xs">
+                                        <td className="px-4 py-3 text-muted-foreground font-mono text-xs whitespace-nowrap">
                                             {sale.invoiceNumber || '-'}
                                         </td>
                                     )}
 
-                                    <td className="px-4 py-3 text-right">
+                                    <td className="px-4 py-3 text-right whitespace-nowrap">
                                         <div className="flex items-center justify-end gap-2">
                                             {/* Warehouse/Admin can Ship */}
                                             {(!sale.isShipped && (role === 'admin' || role === 'warehouse' || role === 'manager')) && (
@@ -373,7 +419,7 @@ export function SalesHistoryClient({ initialSales }: SalesHistoryClientProps) {
                             {filteredSales.length === 0 && (
                                 <tr>
                                     <td colSpan={
-                                        7 + // Tarih, Mağaza/Bölge, Müşteri, Ürün, Plasiyer, Sevk Durumu, Adet
+                                        7 + 1 + // Tarih, Mağaza/Bölge, Müşteri, Ürün, Not, Plasiyer, Sevk Durumu, Adet
                                         (showPrices ? 2 : 0) + // Birim, Toplam
                                         (showProfit ? 1 : 0) + // Kar
                                         ((role === 'admin' || role === 'warehouse' || role === 'manager') ? 1 : 0) + // İrsaliye

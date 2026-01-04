@@ -130,3 +130,29 @@ export async function importCustomersFromCSV() {
         return { success: false, error: "Failed to import customers from CSV" };
     }
 }
+// Helper to get customer profile
+export async function getCustomerProfile(name: string) {
+    try {
+        const customer = await prisma.customer.findFirst({
+            where: { name }
+        });
+
+        if (!customer) return null;
+
+        let region = '';
+        if (customer.storeCode) {
+            const store = await prisma.store.findUnique({
+                where: { code: customer.storeCode }
+            });
+            if (store) region = store.region;
+        }
+
+        return {
+            ...customer,
+            region // Add derived region
+        };
+    } catch (error) {
+        console.error("Failed to fetch customer profile:", error);
+        return null;
+    }
+}

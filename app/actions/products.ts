@@ -9,6 +9,8 @@ export type ProductDTO = {
     name: string
     productNumber?: string
     price: number
+    cost?: number
+    description?: string | null
 }
 
 export async function getProducts() {
@@ -19,7 +21,9 @@ export async function getProducts() {
         return products.map(p => ({
             ...p,
             price: p.price ? p.price.toNumber() : 0,
-            productNumber: p.productNumber || '' // Ensure string
+            cost: p.cost ? p.cost.toNumber() : 0,
+            productNumber: p.productNumber || '', // Ensure string
+            description: p.description
         }))
     } catch (error) {
         console.error("Failed to fetch products:", error)
@@ -54,7 +58,9 @@ export async function createProduct(data: ProductDTO) {
             data: {
                 name: data.name,
                 productNumber: pNum!,
-                price: data.price
+                price: data.price,
+                cost: data.cost,
+                description: data.description
             }
         })
         revalidatePath('/admin/products')
@@ -73,7 +79,9 @@ export async function updateProduct(id: string, data: Partial<ProductDTO>) {
             data: {
                 name: data.name,
                 productNumber: data.productNumber,
-                price: data.price
+                price: data.price,
+                cost: data.cost,
+                description: data.description
             }
         })
         revalidatePath('/admin/products')

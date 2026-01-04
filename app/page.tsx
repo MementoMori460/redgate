@@ -15,10 +15,8 @@ export default async function Home() {
 
   const lateShipmentCount = await checkLateShipments();
 
-  // Filter sales for SALES personnel
-  const filteredSales = (session?.user?.role === 'SALES' || session?.user?.role === 'sales')
-    ? sales.filter(sale => sale.salesPerson === session.user?.name)
-    : sales;
+  // Sales Filter removed as per request - Sales role now sees all sales
+  const filteredSales = sales;
 
   return <DashboardClient sales={filteredSales} user={session?.user} targetRevenue={targetRevenue} lateShipmentCount={lateShipmentCount} />;
 }

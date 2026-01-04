@@ -9,19 +9,26 @@ function safeParseDate(val) {
     if (!val) return null;
 
     if (typeof val === 'number') {
-        return new Date(Math.round((val - 25569) * 86400 * 1000));
+        const d = new Date(Math.round((val - 25569) * 86400 * 1000));
+        d.setUTCHours(12, 0, 0, 0); // Force Noon UTC
+        return d;
     }
 
     if (typeof val === 'string') {
         const trimmed = val.trim();
         let d = new Date(trimmed);
-        if (!isNaN(d.getTime())) return d;
+        if (!isNaN(d.getTime())) {
+            d.setUTCHours(12, 0, 0, 0);
+            return d;
+        }
 
         const normalized = trimmed.replace(/[i\-\/]/g, '.');
         const dmY = normalized.match(/^(\d{1,2})[.](\d{1,2})[.](\d{4})$/);
 
         if (dmY) {
-            return new Date(parseInt(dmY[3]), parseInt(dmY[2]) - 1, parseInt(dmY[1]));
+            const d = new Date(parseInt(dmY[3]), parseInt(dmY[2]) - 1, parseInt(dmY[1]));
+            d.setUTCHours(12, 0, 0, 0);
+            return d;
         }
     }
     return null;
@@ -80,19 +87,41 @@ async function importChecklistData() {
 
                 if (hasDate && (hasCity || hasStore)) {
                     headerIndex = i;
+
+                    // Look at previous row for additional headers (merged headers case)
+                    const prevRow = i > 0 ? rows[i - 1] : [];
+                    const prevRowStrs = prevRow ? prevRow.map(c => c?.toString().trim().toLowerCase() || '') : [];
+
+                    // Helper to check both rows
+                    const checkCol = (patterns, idx) => {
+                        const curr = rowStrs[idx] || '';
+                        const prev = prevRowStrs[idx] || '';
+                        return patterns.some(p => curr.includes(p) || prev.includes(p));
+                    };
+
                     rowStrs.forEach((colName, idx) => {
                         if (colName === 'date' || colName === 'tarih') colMap.date = idx;
                         else if (colName === 'city' || colName === 'şehir' || colName === 'sehir') colMap.city = idx;
                         else if (colName === 'store' || colName === 'mağaza' || colName === 'magaza') colMap.store = idx;
                         else if (colName === 'store code' || colName === 'mağaza kodu' || colName === 'magaza kodu' || colName === 'code' || colName === 'kod') colMap.storeCode = idx;
+
                         else if (colMap.customer === undefined && (colName === 'purchaser' || colName === 'satın alan' || colName === 'personel' || colName === 'salesperson' || colName === 'purchase')) colMap.customer = idx;
+
                         else if (colName === 'item' || colName === 'ürün' || colName === 'urun' || colName === 'açıklama' || colName === 'description' || colName === 'product') colMap.item = idx;
                         else if (colName === 'quantity' || colName === 'adet' || colName === 'miktar') colMap.quantity = idx;
                         else if (colName === 'price' || colName === 'birim fiyat' || colName === 'fiyat') colMap.price = idx;
                         else if (colName === 'total' || colName === 'toplam' || colName === 'tutar') colMap.total = idx;
                         else if (colName === 'profit' || colName === 'net kar' || colName === 'kar') colMap.profit = idx;
-                        else if (colMap.waybill === undefined && (colName === 'waybill' || colName === 'irsaliye' || colName === 'irsaliye no' || colName === 'sevk irsaliye' || colName === 'sevk')) colMap.waybill = idx;
-                        else if (colMap.invoice === undefined && (colName === 'invoice' || colName === 'fatura' || colName === 'fatura no' || colName === 'invoice no')) colMap.invoice = idx;
+
+                        // Check previous row for Waybill/Invoice
+                        // Also check current row just in case
+                        if (colMap.waybill === undefined) {
+                            if (checkCol(['waybill', 'irsaliye', 'sevk'], idx)) colMap.waybill = idx;
+                        }
+
+                        if (colMap.invoice === undefined) {
+                            if (checkCol(['invoice', 'fatura'], idx)) colMap.invoice = idx;
+                        }
                     });
                     break;
                 }
@@ -134,8 +163,22 @@ async function importChecklistData() {
                         finalStoreCode = storeName.toUpperCase().substring(0, 3) + "001";
                     }
 
-                    const waybillNumber = colMap.waybill !== undefined ? (row[colMap.waybill]?.toString() || null) : null;
-                    const invoiceNumber = colMap.invoice !== undefined ? (row[colMap.invoice]?.toString() || null) : null;
+                    // Advanced Extraction for Waybill/Invoice
+                    const extractValue = (idx) => {
+                        if (idx === undefined) return null;
+                        const val = row[idx];
+                        if (val === true || val === 'true') {
+                            const nextVal = row[idx + 1];
+                            if (nextVal && (typeof nextVal === 'string' || typeof nextVal === 'number')) {
+                                return nextVal.toString();
+                            }
+                            return null;
+                        }
+                        return val ? val.toString() : null;
+                    };
+
+                    const waybillNumber = extractValue(colMap.waybill);
+                    const invoiceNumber = extractValue(colMap.invoice);
 
                     if (!item || !storeName) continue;
 
@@ -149,7 +192,6 @@ async function importChecklistData() {
                                     where: { id: existingCustomer.id },
                                     data: {
                                         city: city,
-                                        storeCode: finalStoreCode !== 'Unknown' ? finalStoreCode : undefined
                                     }
                                 });
                             }
@@ -220,7 +262,7 @@ async function importChecklistData() {
                         status: 'APPROVED',
                         waybillNumber: waybillNumber,
                         invoiceNumber: invoiceNumber,
-                        paymentStatus: invoiceNumber ? 'PAID' : 'UNPAID',
+                        paymentStatus: 'PAID', // Force PAID
                     };
 
                     if (existingSale) {

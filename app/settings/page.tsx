@@ -2,6 +2,7 @@ import { ChangePasswordForm } from './ChangePasswordForm';
 import { RevenueTargetForm } from './RevenueTargetForm';
 import { MaxShippingDaysForm } from './MaxShippingDaysForm';
 import { ImportDataButton } from './ImportDataButton';
+import { AdminEmailForm } from './AdminEmailForm';
 import { SignOutButton } from './SignOutButton';
 import { auth } from '@/auth';
 
@@ -20,6 +21,7 @@ export default async function SettingsPage() {
                 <ChangePasswordForm />
                 {isAdmin && (
                     <>
+                        <AdminEmailForm />
                         <RevenueTargetForm />
                         <MaxShippingDaysForm />
                         <ImportDataButton />

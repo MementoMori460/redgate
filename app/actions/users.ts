@@ -53,3 +53,19 @@ export async function deleteUser(id: string) {
         return { success: false, error: "Kullanıcı silinemedi." };
     }
 }
+// ... existing imports
+
+export async function updatePassword(id: string, newPassword: string) {
+    try {
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await prisma.user.update({
+            where: { id },
+            data: { password: hashedPassword }
+        });
+        revalidatePath('/admin/users');
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update password:", error);
+        return { success: false, error: "Şifre güncellenemedi." };
+    }
+}

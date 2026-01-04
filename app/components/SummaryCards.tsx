@@ -5,6 +5,7 @@ import { clsx } from 'clsx';
 import { useRole } from '../contexts/RoleContext';
 import { SaleDTO } from '../actions/sales';
 import { calculateMetrics } from '../utils/metrics';
+import { useRouter } from 'next/navigation';
 
 interface MetricItemProps {
     title: string;
@@ -13,11 +14,20 @@ interface MetricItemProps {
     trend?: 'up' | 'down' | 'neutral';
     trendValue?: string;
     className?: string;
+    onClick?: () => void;
 }
 
-function MetricItem({ title, value, subValue, trend, trendValue, className }: MetricItemProps) {
+function MetricItem({ title, value, subValue, trend, trendValue, className, onClick }: MetricItemProps) {
     return (
-        <div className={clsx("flex flex-col p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-card transition-colors", className)}>
+        <div
+            onClick={onClick}
+            className={clsx(
+                "flex flex-col p-4 rounded-xl border border-border/50 bg-card/50 transition-all",
+                onClick && "cursor-pointer hover:bg-card hover:scale-[1.02] active:scale-[0.98]",
+                !onClick && "hover:bg-card",
+                className
+            )}
+        >
             <span className="text-sm font-medium text-muted-foreground">{title}</span>
             <div className="mt-2 flex items-baseline gap-2">
                 <span className="text-2xl font-bold tracking-tight text-foreground">{value}</span>
@@ -47,6 +57,7 @@ interface SummaryCardsProps {
 
 export function SummaryCards({ data, targetRevenue, lateShipmentCount = 0 }: SummaryCardsProps) {
     const { role } = useRole();
+    const router = useRouter();
     const metrics = calculateMetrics(data, targetRevenue);
     const showProfit = role === 'admin' || role === 'accountant';
 
@@ -60,6 +71,7 @@ export function SummaryCards({ data, targetRevenue, lateShipmentCount = 0 }: Sum
                     subValue="Acil"
                     trend={lateShipmentCount > 0 ? 'down' : 'neutral'}
                     className={lateShipmentCount > 0 ? "border-red-500/50 bg-red-500/10" : ""}
+                    onClick={() => router.push('/sales?filter=late')}
                 />
                 <MetricItem
                     title="Bekleyen"
@@ -67,6 +79,7 @@ export function SummaryCards({ data, targetRevenue, lateShipmentCount = 0 }: Sum
                     subValue="Sipariş"
                     trend={metrics.unshippedCount > 5 ? 'down' : 'up'}
                     trendValue={metrics.unshippedCount > 5 ? 'Yoğunluk' : 'Normal'}
+                    onClick={() => router.push('/sales?filter=unshipped')}
                 />
                 <MetricItem
                     title="Kargolanan"
@@ -74,11 +87,13 @@ export function SummaryCards({ data, targetRevenue, lateShipmentCount = 0 }: Sum
                     subValue="Bugün"
                     trend="up"
                     trendValue="İşlem"
+                    onClick={() => router.push('/sales?filter=shipped')}
                 />
                 <MetricItem
                     title="Toplam Satış"
                     value={metrics.salesCount.toString()}
                     subValue="Adet"
+                    onClick={() => router.push('/sales')}
                 />
             </div>
         );
@@ -138,6 +153,7 @@ export function SummaryCards({ data, targetRevenue, lateShipmentCount = 0 }: Sum
                     title="Toplam Satış"
                     value={`${data.length}`}
                     subValue="Adet"
+                    onClick={() => router.push('/sales')}
                 />
             </div>
 
@@ -153,6 +169,7 @@ export function SummaryCards({ data, targetRevenue, lateShipmentCount = 0 }: Sum
                             trend={lateShipmentCount > 0 ? 'down' : 'neutral'}
                             trendValue={lateShipmentCount > 0 ? "Dikkat!" : "Sorun Yok"}
                             className={lateShipmentCount > 0 ? "border-red-500/50 bg-red-500/10" : ""}
+                            onClick={() => router.push('/sales?filter=late')}
                         />
                         <MetricItem
                             title="Bekleyen"
@@ -160,12 +177,14 @@ export function SummaryCards({ data, targetRevenue, lateShipmentCount = 0 }: Sum
                             subValue="Sipariş"
                             trend={metrics.unshippedCount > 0 ? 'neutral' : 'up'}
                             trendValue="Sevkiyat Bekliyor"
+                            onClick={() => router.push('/sales?filter=unshipped')}
                         />
                         <MetricItem
                             title="Bugün Kargolanan"
                             value={metrics.shippedToday.toString()}
                             subValue="Paket"
                             trend="up"
+                            onClick={() => router.push('/sales?filter=shipped')}
                         />
                     </div>
                 </div>

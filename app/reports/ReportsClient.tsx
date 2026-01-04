@@ -55,11 +55,19 @@ export function ReportsClient({ data }: ReportsClientProps) {
 
     const currentMonth = tableData[0] || { revenue: 0, profit: 0, revenueGrowth: 0, profitGrowth: 0, salesCount: 0 };
 
-    // Process Region Data: Remove Unknown, Sort by Value, Take Top 3
-    const processedRegionData = regionData
+    // Process Region Data: Remove Unknown, Sort by Value, Take Top 3 + Other
+    const filteredRegions = regionData
         .filter(item => item.name !== 'Unknown' && item.name !== 'unknown')
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 3);
+        .sort((a, b) => b.value - a.value);
+
+    const top3 = filteredRegions.slice(0, 3);
+    const otherRegions = filteredRegions.slice(3);
+    const otherTotal = otherRegions.reduce((sum, item) => sum + item.value, 0);
+
+    const processedRegionData = [...top3];
+    if (otherTotal > 0) {
+        processedRegionData.push({ name: 'Diğer', value: otherTotal });
+    }
 
     return (
         <div className="space-y-6">
@@ -129,7 +137,7 @@ export function ReportsClient({ data }: ReportsClientProps) {
 
                 {/* Region Chart - Span 4 */}
                 <div className="md:col-span-4 bg-card border border-border/50 rounded-xl p-4 shadow-sm min-h-[350px]">
-                    <h3 className="text-sm font-semibold mb-4">Bölgesel Dağılım (Top 3)</h3>
+                    <h3 className="text-sm font-semibold mb-4">Bölgesel Dağılım</h3>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>

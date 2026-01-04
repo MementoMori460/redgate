@@ -2,6 +2,7 @@ import { getUsers, deleteUser } from '@/app/actions/users';
 import { Trash2, User } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
 import { CreateUserForm } from './CreateUserForm';
+import { UserItem } from './UserItem';
 
 export default async function UsersPage() {
     const users = await getUsers();
@@ -34,27 +35,7 @@ export default async function UsersPage() {
                         </h2>
                         <div className="space-y-4">
                             {users.map((user) => (
-                                <div key={user.id} className="flex items-center justify-between p-4 bg-secondary/20 rounded-lg border border-border/50 hover:border-primary/20 transition-all">
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
-                                            {user.name.charAt(0)}
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-foreground">{user.name}</p>
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                <span>@{user.username}</span>
-                                                <span>•</span>
-                                                <span className="bg-secondary/50 px-2 py-0.5 rounded text-foreground font-medium">{user.role}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <form action={handleDeleteUser}>
-                                        <input type="hidden" name="id" value={user.id} />
-                                        <button className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </form>
-                                </div>
+                                <UserItem key={user.id} user={user} />
                             ))}
                         </div>
                     </div>

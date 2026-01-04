@@ -1,0 +1,1 @@
+const { PrismaClient } = require("@prisma/client"); const prisma = new PrismaClient(); async function main() { await prisma.sale.updateMany({ data: { paymentStatus: "PAID" } }); console.log("All sales marked as PAID."); } main().catch(console.error).finally(() => prisma.$disconnect());

@@ -80,6 +80,12 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
                     <h1 className="text-2xl font-bold">Müşteri Yönetimi</h1>
                     <p className="text-muted-foreground">Müşteri listesi ve detayları</p>
                 </div>
+
+                <div className="hidden lg:block bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-lg">
+                    <p className="text-xs text-blue-600">
+                        <span className="font-bold">Not:</span> Müşterilerin sisteme giriş şifreleri <a href="/admin/users" className="underline hover:text-blue-800">Kullanıcılar</a> sayfasından yönetilir.
+                    </p>
+                </div>
                 <div className="flex gap-2">
                     <input
                         type="file"

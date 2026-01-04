@@ -39,6 +39,7 @@ export function EditSaleModal({ sale, onClose, user }: EditSaleModalProps) {
     const [totalPrice, setTotalPrice] = useState<number>(sale.total);
     const [netProfit, setNetProfit] = useState<number>(sale.profit);
     const [date, setDate] = useState<string>(sale.date);
+    const [description, setDescription] = useState<string>(sale.description || '');
 
     // Store logic
     const [stores, setStores] = useState<Store[]>([]);
@@ -187,6 +188,7 @@ export function EditSaleModal({ sale, onClose, user }: EditSaleModalProps) {
                 price: calculateDiscountedPrice(),
                 total: totalPrice,
                 profit: netProfit,
+                description: description
             });
 
             // Reload page to reflect changes
@@ -466,6 +468,16 @@ export function EditSaleModal({ sale, onClose, user }: EditSaleModalProps) {
                                     {calculateDiscountedPrice().toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-secondary-foreground">Açıklama / Not</label>
+                            <textarea
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all resize-none h-20"
+                                placeholder="Sipariş notu..."
+                            />
                         </div>
 
                         <div className="grid grid-cols-2 gap-6">

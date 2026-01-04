@@ -41,11 +41,16 @@ export function Sidebar() {
   useEffect(() => {
     // Check for late shipments
     const check = async () => {
-      const count = await checkLateShipments();
-      setLateShipmentCount(count);
+      // Only check for relevant roles
+      if (role !== 'customer') {
+        const count = await checkLateShipments();
+        setLateShipmentCount(count);
+      } else {
+        setLateShipmentCount(0);
+      }
     };
     check();
-  }, []);
+  }, [role, pathname]);
 
   // Removed local toggleSidebar function since we use the one from context
 

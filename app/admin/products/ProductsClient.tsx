@@ -83,7 +83,7 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                         {product.price ? `${product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL` : '-'}
                                     </td>
                                     <td className="px-6 py-3 text-right text-muted-foreground">
-                                        -
+                                        {product.cost ? `${product.cost.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL` : '-'}
                                     </td>
                                     <td className="px-6 py-3">
                                         <div className="flex items-center justify-end gap-2">
@@ -136,7 +136,9 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
 function ProductModal({ product, onClose, onSuccess }: { product: ProductDTO | null, onClose: () => void, onSuccess: () => void }) {
     const [name, setName] = useState(product?.name || '');
     const [price, setPrice] = useState(product?.price?.toString() || '');
+    const [cost, setCost] = useState(product?.cost?.toString() || '');
     const [productNumber, setProductNumber] = useState(product?.productNumber || '');
+    const [description, setDescription] = useState(product?.description || '');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -146,7 +148,9 @@ function ProductModal({ product, onClose, onSuccess }: { product: ProductDTO | n
         const data = {
             name,
             price: price ? parseFloat(price) : 0, // Ensure strictly number, 0 if empty/invalid
-            productNumber: productNumber || undefined
+            cost: cost ? parseFloat(cost) : 0,
+            productNumber: productNumber || undefined,
+            description: description || null
         };
 
         let result;
@@ -200,15 +204,37 @@ function ProductModal({ product, onClose, onSuccess }: { product: ProductDTO | n
                             required
                         />
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Fiyat (TL)</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={price}
+                                onChange={(e) => setPrice(e.target.value)}
+                                className="w-full px-3 py-2 border border-border rounded-lg bg-secondary/20 focus:ring-2 focus:ring-primary/50 outline-none"
+                                placeholder="Opsiyonel"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Maliyet (TL)</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={cost}
+                                onChange={(e) => setCost(e.target.value)}
+                                className="w-full px-3 py-2 border border-border rounded-lg bg-secondary/20 focus:ring-2 focus:ring-primary/50 outline-none"
+                                placeholder="Opsiyonel"
+                            />
+                        </div>
+                    </div>
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Fiyat (TL)</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            value={price}
-                            onChange={(e) => setPrice(e.target.value)}
-                            className="w-full px-3 py-2 border border-border rounded-lg bg-secondary/20 focus:ring-2 focus:ring-primary/50 outline-none"
-                            placeholder="Opsiyonel"
+                        <label className="text-sm font-medium">Açıklama / Not</label>
+                        <textarea
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            className="w-full px-3 py-2 border border-border rounded-lg bg-secondary/20 focus:ring-2 focus:ring-primary/50 outline-none resize-none h-20"
+                            placeholder="Ürün hakkında not..."
                         />
                     </div>
 

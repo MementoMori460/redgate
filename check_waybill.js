@@ -1,0 +1,1 @@
+const { PrismaClient } = require("@prisma/client"); const prisma = new PrismaClient(); async function main() { const count = await prisma.sale.count({ where: { waybillNumber: { not: null } } }); console.log("Sales with Waybill:", count); } main().catch(console.error).finally(() => prisma.$disconnect());
