@@ -1,58 +1,51 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
-
-
 model Customer {
-  id            String   @id @default(uuid())
-  name          String
-  city          String?
-  storeCode     String?  // Optional link to Store
-  contactName   String?
-  phone         String?
-  email         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  sales         Sale[]
+  id          String   @id @default(uuid())
+  name        String
+  city        String?
+  storeCode   String?
+  contactName String?
+  phone       String?
+  email       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  sales       Sale[]
 }
 
 model Sale {
-  id          String   @id @default(uuid())
-  date        DateTime
-  storeCode   String
-  region      String
-  city        String
-  storeName   String
-  salesPerson String
-  customerName  String?
+  id              String    @id @default(uuid())
+  date            DateTime
+  storeCode       String
+  region          String
+  city            String
+  storeName       String
+  salesPerson     String
+  customerName    String?
   customerContact String?
-  item        String
-  price       Decimal
-  quantity    Int      @default(1)
-  total       Decimal
-  profit      Decimal
-  isShipped   Boolean  @default(false)
-  status      String   @default("APPROVED") // APPROVED, PENDING, REJECTED
-  description String?  // Optional order notes
-  waybillNumber String? // İrsaliye Numarası
-  invoiceNumber String? // Fatura Numarası
-  paymentStatus String? @default("UNPAID") // PAID, UNPAID, PARTIAL
-  
-  customerId  String?
-  customer    Customer? @relation(fields: [customerId], references: [id])
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  item            String
+  price           Decimal
+  quantity        Int       @default(1)
+  total           Decimal
+  profit          Decimal
+  isShipped       Boolean   @default(false)
+  status          String    @default("APPROVED")
+  description     String?
+  waybillNumber   String?
+  invoiceNumber   String?
+  paymentStatus   String?   @default("UNPAID")
+  customerId      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  customer        Customer? @relation(fields: [customerId], references: [id])
 }
 
 model Store {
@@ -70,7 +63,7 @@ model User {
   username  String   @unique
   password  String
   name      String
-  role      String   // ADMIN, SALES, WAREHOUSE, ACCOUNTANT, CUSTOMER
+  role      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -83,11 +76,11 @@ model GlobalSettings {
 
 model Product {
   id            String   @id @default(uuid())
-  productNumber String   @unique // e.g., "PRD-001"
+  productNumber String   @unique
   name          String   @unique
   price         Decimal?
-  cost          Decimal? // Maliyet
-  description   String?  // Optional product note
+  cost          Decimal?
+  description   String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
