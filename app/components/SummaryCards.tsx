@@ -1,43 +1,40 @@
 'use client';
 
-import { TrendingUp, TrendingDown, Target, Wallet, CreditCard, Package, Truck, Clock, ShoppingBag } from 'lucide-react';
+import { TrendingUp, TrendingDown, Clock, Truck, Package, ShoppingBag } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useRole } from '../contexts/RoleContext';
 import { SaleDTO } from '../actions/sales';
 import { calculateMetrics } from '../utils/metrics';
 
-interface MetricCardProps {
+interface MetricItemProps {
     title: string;
     value: string;
-    change?: string;
-    isPositive?: boolean;
-    icon: React.ElementType;
-    color: 'primary' | 'accent' | 'green' | 'red';
+    subValue?: string;
+    trend?: 'up' | 'down' | 'neutral';
+    trendValue?: string;
+    className?: string;
 }
 
-function MetricCard({ title, value, change, isPositive, icon: Icon, color }: MetricCardProps) {
-    const colorMap = {
-        primary: 'bg-primary/20 text-primary',
-        accent: 'bg-accent/20 text-accent',
-        green: 'bg-green-500/20 text-green-500',
-        red: 'bg-red-500/20 text-red-500',
-    };
-
+function MetricItem({ title, value, subValue, trend, trendValue, className }: MetricItemProps) {
     return (
-        <div className="bg-card p-6 rounded-2xl border border-border hover:border-primary/50 transition-all duration-300 shadow-lg shadow-black/50">
-            <div className="flex justify-between items-start mb-4">
-                <div className={clsx("p-3 rounded-xl", colorMap[color])}>
-                    <Icon size={24} />
-                </div>
-                {change && (
-                    <div className={clsx("flex items-center text-xs font-medium px-2 py-1 rounded-full", isPositive ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400")}>
-                        {isPositive ? <TrendingUp size={12} className="mr-1" /> : <TrendingDown size={12} className="mr-1" />}
-                        {change}
-                    </div>
-                )}
+        <div className={clsx("flex flex-col p-4 rounded-xl border border-border/50 bg-card/50 hover:bg-card transition-colors", className)}>
+            <span className="text-sm font-medium text-muted-foreground">{title}</span>
+            <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-bold tracking-tight text-foreground">{value}</span>
+                {subValue && <span className="text-sm text-muted-foreground">{subValue}</span>}
             </div>
-            <h3 className="text-secondary-foreground text-sm font-medium mb-1">{title}</h3>
-            <p className="text-2xl font-bold text-foreground">{value}</p>
+            {(trend || trendValue) && (
+                <div className="mt-2 flex items-center text-xs">
+                    {trend === 'up' && <TrendingUp size={12} className="text-green-500 mr-1" />}
+                    {trend === 'down' && <TrendingDown size={12} className="text-red-500 mr-1" />}
+                    <span className={clsx(
+                        "font-medium",
+                        trend === 'up' ? "text-green-500" : trend === 'down' ? "text-red-500" : "text-muted-foreground"
+                    )}>
+                        {trendValue}
+                    </span>
+                </div>
+            )}
         </div>
     );
 }
@@ -45,161 +42,134 @@ function MetricCard({ title, value, change, isPositive, icon: Icon, color }: Met
 interface SummaryCardsProps {
     data: SaleDTO[];
     targetRevenue?: number;
+    lateShipmentCount?: number;
 }
 
-export function SummaryCards({ data, targetRevenue }: SummaryCardsProps) {
+export function SummaryCards({ data, targetRevenue, lateShipmentCount = 0 }: SummaryCardsProps) {
     const { role } = useRole();
     const metrics = calculateMetrics(data, targetRevenue);
     const showProfit = role === 'admin' || role === 'accountant';
 
-    const FinancialMetrics = () => (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
-                <div className="flex justify-between items-start mb-2">
-                    <div>
-                        <p className="text-xs font-medium text-muted-foreground">Toplam Ciro</p>
-                        <h3 className="text-xl font-bold text-foreground mt-1">
-                            {metrics.totalRevenue.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ₺
-                        </h3>
-                    </div>
-                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                        <Wallet size={18} />
-                    </div>
-                </div>
-                <div className="flex items-center text-xs text-green-500">
-                    <TrendingUp size={14} className="mr-1" />
-                    <span className="font-medium">Hedef: {Math.round(metrics.progress)}%</span>
-                </div>
-            </div>
-
-            {showProfit && (
-                <>
-                    <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
-                        <div className="flex justify-between items-start mb-2">
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground">Toplam Kar</p>
-                                <h3 className="text-xl font-bold text-foreground mt-1">
-                                    {metrics.totalProfit.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ₺
-                                </h3>
-                            </div>
-                            <div className="p-2 bg-green-500/10 rounded-lg text-green-500">
-                                <TrendingUp size={18} />
-                            </div>
-                        </div>
-                        <div className="flex items-center text-xs text-green-500">
-                            <span className="font-medium">Gayet İyi</span>
-                        </div>
-                    </div>
-
-                    <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
-                        <div className="flex justify-between items-start mb-2">
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground">Kar Marjı</p>
-                                <h3 className="text-xl font-bold text-foreground mt-1">
-                                    {metrics.margin.toFixed(1)}%
-                                </h3>
-                            </div>
-                            <div className="p-2 bg-orange-500/10 rounded-lg text-orange-500">
-                                <Target size={18} />
-                            </div>
-                        </div>
-                        <div className="flex items-center text-xs text-muted-foreground">
-                            <span className="font-medium">Ortalama</span>
-                        </div>
-                    </div>
-                </>
-            )}
-
-            <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
-                <div className="flex justify-between items-start mb-2">
-                    <div>
-                        <p className="text-xs font-medium text-muted-foreground">Toplam Satış</p>
-                        <h3 className="text-xl font-bold text-foreground mt-1">
-                            {metrics.salesCount}
-                        </h3>
-                    </div>
-                    <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
-                        <ShoppingBag size={18} />
-                    </div>
-                </div>
-                <div className="flex items-center text-xs text-muted-foreground">
-                    <span>Adet</span>
-                </div>
-            </div>
-
-            <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
-                <div className="flex justify-between items-start mb-2">
-                    <div>
-                        <p className="text-xs font-medium text-muted-foreground">Ortalama Sepet</p>
-                        <h3 className="text-xl font-bold text-foreground mt-1">
-                            {metrics.averageOrderValue.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ₺
-                        </h3>
-                    </div>
-                    <div className="p-2 bg-purple-500/10 rounded-lg text-purple-500">
-                        <CreditCard size={18} />
-                    </div>
-                </div>
-                <div className="flex items-center text-xs text-muted-foreground">
-                    <span>İşlem Başına</span>
-                </div>
-            </div>
-        </div>
-    );
-
-    const OperationalMetrics = () => (
-        <>
-            {(role === 'admin' || role === 'manager') && (
-                <h3 className="text-lg font-semibold text-foreground mb-4 px-1">Depo & Lojistik Durumu</h3>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <MetricCard
-                    title="Bekleyen Gönderiler"
+    // Warehouse View
+    if (role === 'warehouse') {
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <MetricItem
+                    title="Geciken Sipariş"
+                    value={lateShipmentCount.toString()}
+                    subValue="Acil"
+                    trend={lateShipmentCount > 0 ? 'down' : 'neutral'}
+                    className={lateShipmentCount > 0 ? "border-red-500/50 bg-red-500/10" : ""}
+                />
+                <MetricItem
+                    title="Bekleyen"
                     value={metrics.unshippedCount.toString()}
-                    change={`${metrics.unshippedCount > 5 ? 'Yoğunluk var' : 'Normal seviye'}`}
-                    isPositive={metrics.unshippedCount <= 5}
-                    icon={Clock}
-                    color="red"
+                    subValue="Sipariş"
+                    trend={metrics.unshippedCount > 5 ? 'down' : 'up'}
+                    trendValue={metrics.unshippedCount > 5 ? 'Yoğunluk' : 'Normal'}
                 />
-                <MetricCard
-                    title="Bugün Kargolanan"
+                <MetricItem
+                    title="Kargolanan"
                     value={metrics.shippedToday.toString()}
-                    change="Düne göre +5"
-                    isPositive={true}
-                    icon={Truck}
-                    color="green"
+                    subValue="Bugün"
+                    trend="up"
+                    trendValue="İşlem"
                 />
-                <MetricCard
+                <MetricItem
                     title="Toplam Satış"
                     value={metrics.salesCount.toString()}
-                    isPositive={true}
-                    icon={Package}
-                    color="primary"
-                />
-                <MetricCard
-                    title="İade Talepleri"
-                    value="2"
-                    icon={TrendingDown}
-                    color="accent"
+                    subValue="Adet"
                 />
             </div>
-        </>
-    );
-
-    // Warehouse sees ONLY Operational
-    if (role === 'warehouse') {
-        return <OperationalMetrics />;
+        );
     }
 
-    // Sales sees ONLY Financial (or tailored sales metrics)
-    if (role === 'sales') {
-        return <FinancialMetrics />;
+    // Customer View
+    if (role === 'customer') {
+        return (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <MetricItem
+                    title="Siparişlerim"
+                    value={`${data.length}`}
+                    subValue="Adet"
+                />
+            </div>
+        );
     }
 
-    // Admin/Manager sees BOTH
+    // Standard View (Admin, Manager, Sales, Accountant)
     return (
-        <div>
-            <FinancialMetrics />
-            <OperationalMetrics />
+        <div className="space-y-6">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <MetricItem
+                    title="Toplam Ciro"
+                    value={`${metrics.totalRevenue.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ₺`}
+                    trend="up"
+                    trendValue={`Hedef: %${Math.round(metrics.progress)}`}
+                />
+
+                {targetRevenue !== undefined && targetRevenue > 0 && (
+                    <MetricItem
+                        title="Hedefe Kalan"
+                        value={`${Math.max(0, targetRevenue - metrics.totalRevenue).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ₺`}
+                        subValue={metrics.totalRevenue >= targetRevenue ? "Hedef Tamamlandı!" : "Kalan Tutar"}
+                        trend={metrics.totalRevenue >= targetRevenue ? "up" : "neutral"}
+                        className={metrics.totalRevenue >= targetRevenue ? "border-green-500/50 bg-green-500/10" : ""}
+                    />
+                )}
+
+                {showProfit && (
+                    <>
+                        <MetricItem
+                            title="Toplam Kar"
+                            value={`${metrics.totalProfit.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ₺`}
+                            trend="up"
+                            trendValue="Gayet İyi"
+                        />
+                        <MetricItem
+                            title="Kar Marjı"
+                            value={`%${metrics.margin.toFixed(1)}`}
+                            subValue="Ortalama"
+                        />
+                    </>
+                )}
+
+                <MetricItem
+                    title="Toplam Satış"
+                    value={`${data.length}`}
+                    subValue="Adet"
+                />
+            </div>
+
+            {/* Operational row for Admins/Managers */}
+            {(role === 'admin' || role === 'manager') && (
+                <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-3 px-1 uppercase tracking-wider">Lojistik Durumu</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <MetricItem
+                            title="Geciken Kargo"
+                            value={lateShipmentCount.toString()}
+                            subValue="Adet"
+                            trend={lateShipmentCount > 0 ? 'down' : 'neutral'}
+                            trendValue={lateShipmentCount > 0 ? "Dikkat!" : "Sorun Yok"}
+                            className={lateShipmentCount > 0 ? "border-red-500/50 bg-red-500/10" : ""}
+                        />
+                        <MetricItem
+                            title="Bekleyen"
+                            value={metrics.unshippedCount.toString()}
+                            subValue="Sipariş"
+                            trend={metrics.unshippedCount > 0 ? 'neutral' : 'up'}
+                            trendValue="Sevkiyat Bekliyor"
+                        />
+                        <MetricItem
+                            title="Bugün Kargolanan"
+                            value={metrics.shippedToday.toString()}
+                            subValue="Paket"
+                            trend="up"
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

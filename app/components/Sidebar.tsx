@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -14,23 +13,42 @@ import { RoleSwitcher } from './RoleSwitcher'; // Kept as it's used in the compo
 import { useRole } from '../contexts/RoleContext';
 import { useSidebar } from '../contexts/SidebarContext'; // Kept as it's used in the component
 import { handleSignOut } from '../actions/auth';
+import { checkLateShipments } from '../utils/notifications';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from './ThemeToggle';
-import { useState } from 'react'; // Added from the instruction's implied change
+import { useState, useEffect } from 'react'; // Added from the instruction's implied change
 
 const navItems = [
-  { name: 'Panel', href: '/', icon: LayoutDashboard },
-  { name: 'Satış Geçmişi', href: '/sales', icon: Receipt },
-  { name: 'Raporlar', href: '/reports', icon: PieChart },
+  { name: 'Panel', href: '/', icon: LayoutDashboard, roles: ['admin', 'manager', 'sales', 'warehouse', 'accountant'] },
+  { name: 'Sipariş Ver', href: '/customer/order', icon: PlusCircle, roles: ['customer'] },
+  { name: 'Siparişlerim', href: '/sales', icon: Receipt, roles: ['customer'] },
+  { name: 'Satış Takip', href: '/sales', icon: Receipt, roles: ['admin', 'manager', 'sales', 'accountant', 'warehouse'] },
+  { name: 'Raporlar', href: '/reports', icon: PieChart, roles: ['admin', 'manager', 'accountant'] },
   { name: 'Kullanıcılar', href: '/admin/users', icon: Users, roles: ['admin'] },
+  { name: 'Müşteriler', href: '/admin/customers', icon: Users, roles: ['admin'] },
   { name: 'Ürünler', href: '/admin/products', icon: Package, roles: ['admin'] },
-  { name: 'Ayarlar', href: '/settings', icon: Settings },
+  { name: 'Bekleyen Siparişler', href: '/admin/orders', icon: Package, roles: ['admin', 'manager', 'warehouse'] },
+  { name: 'Ayarlar', href: '/settings', icon: Settings, roles: ['admin', 'manager', 'sales', 'warehouse', 'accountant', 'customer'] },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { role, currentUser, isOriginalAdmin } = useRole();
-  const { isCollapsed, toggleSidebar } = useSidebar();
+  const { role, currentUser, isOriginalAdmin, setRole } = useRole();
+  const { theme } = useTheme();
+  const { isCollapsed, toggleSidebar } = useSidebar(); // Use context
+  const [lateShipmentCount, setLateShipmentCount] = useState(0);
+
+  useEffect(() => {
+    // Check for late shipments
+    const check = async () => {
+      const count = await checkLateShipments();
+      setLateShipmentCount(count);
+    };
+    check();
+  }, []);
+
+  // Removed local toggleSidebar function since we use the one from context
+
 
   return (
     <aside
@@ -39,8 +57,8 @@ export function Sidebar() {
         isCollapsed ? "w-20" : "w-64"
       )}
     >
-      <div className="p-4 border-b border-border flex flex-col items-center relative">
-        <div className={clsx("relative transition-all duration-300", isCollapsed ? "w-10 h-10" : "w-full h-16")}>
+      <div className="p-2 border-b border-border flex flex-col items-center relative">
+        <div className={clsx("relative transition-all duration-300", isCollapsed ? "w-10 h-10" : "w-full h-12")}>
           <Image
             src="/logo.png"
             alt="Redgate Logo"
@@ -49,14 +67,10 @@ export function Sidebar() {
             priority
           />
         </div>
-        {!isCollapsed && (
-          <p className="text-muted text-xs font-medium tracking-widest uppercase mt-4 whitespace-nowrap overflow-hidden">
-            2026
-          </p>
-        )}
+
       </div>
 
-      <nav className="flex-1 p-2 space-y-2 mt-4">
+      <nav className="flex-1 p-2 space-y-0.5 mt-2">
         {navItems.map((item) => {
           if (item.roles && !item.roles.includes(role)) return null;
 
@@ -68,7 +82,7 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={clsx(
-                "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group relative overflow-hidden",
+                "flex items-center gap-3 px-4 py-1.5 rounded-lg transition-all duration-200 group relative overflow-hidden",
                 isActive
                   ? "bg-primary/10 text-primary font-medium"
                   : "text-muted hover:bg-secondary/50 hover:text-foreground"
@@ -97,6 +111,29 @@ export function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-border space-y-4">
+        {/* Bell Icon with Alert Badge */}
+        <div className={clsx("flex flex-col items-center gap-4 mb-8", isCollapsed ? "px-2" : "px-4")}>
+          <div className="relative">
+            <div className="p-2 bg-secondary rounded-lg text-foreground">
+              <Bell size={20} />
+            </div>
+            {lateShipmentCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+                {lateShipmentCount}
+              </span>
+            )}
+          </div>
+          {!isCollapsed && (
+            <div className="text-center">
+              {lateShipmentCount > 0 ? (
+                <p className="text-xs font-bold text-red-500 animate-pulse">{lateShipmentCount} Gecikmiş Kargo!</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Bildirim Yok</p>
+              )}
+            </div>
+          )}
+        </div>
+
         {isCollapsed ? (
           <div className="flex justify-center">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-xs font-bold text-white cursor-help" title={currentUser}>
@@ -121,19 +158,8 @@ export function Sidebar() {
           </div>
         )}
 
-        <div className={clsx("flex items-center gap-2", isCollapsed ? "flex-col justify-center" : "justify-between")}>
+        <div className={clsx("flex items-center gap-2", isCollapsed ? "flex-col justify-center" : "justify-center")}>
           <ThemeToggle />
-          <button
-            onClick={() => handleSignOut()}
-            className={clsx(
-              "p-1.5 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors",
-              isCollapsed ? "w-full flex justify-center" : ""
-            )}
-            title="Çıkış Yap"
-          >
-            <LogOut size={18} />
-            {!isCollapsed && <span className="font-medium ml-2">Çıkış Yap</span>}
-          </button>
         </div>
       </div>
 

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-export type UserRole = 'admin' | 'manager' | 'sales' | 'warehouse' | 'accountant';
+export type UserRole = 'admin' | 'manager' | 'sales' | 'warehouse' | 'accountant' | 'customer';
 
 interface RoleContextType {
     role: UserRole;

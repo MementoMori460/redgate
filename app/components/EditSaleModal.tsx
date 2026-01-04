@@ -2,12 +2,13 @@
 
 import { X, Search, User as UserIcon, Package } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { createSale, getStores, getCustomers } from '../actions/sales';
+import { updateSale, getStores, getCustomers, SaleDTO } from '../actions/sales';
 import { User } from 'next-auth';
 import { getUsers } from '../actions/users';
 import { getProducts, ProductDTO } from '../actions/products';
 
-interface AddSaleFormProps {
+interface EditSaleModalProps {
+    sale: SaleDTO;
     onClose: () => void;
     user?: User;
 }
@@ -31,12 +32,13 @@ type Customer = {
     contact: string;
 };
 
-export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
-    const [quantity, setQuantity] = useState<number>(1);
-    const [unitPrice, setUnitPrice] = useState<number>(0);
-    const [cost, setCost] = useState<number>(0);
-    const [totalPrice, setTotalPrice] = useState<number>(0);
-    const [netProfit, setNetProfit] = useState<number>(0);
+export function EditSaleModal({ sale, onClose, user }: EditSaleModalProps) {
+    const [quantity, setQuantity] = useState<number>(sale.quantity);
+    const [unitPrice, setUnitPrice] = useState<number>(sale.price);
+    const [cost, setCost] = useState<number>(sale.total - sale.profit); // Approximate initial cost
+    const [totalPrice, setTotalPrice] = useState<number>(sale.total);
+    const [netProfit, setNetProfit] = useState<number>(sale.profit);
+    const [date, setDate] = useState<string>(sale.date);
 
     // Store logic
     const [stores, setStores] = useState<Store[]>([]);
@@ -48,8 +50,8 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
     const [salesPersons, setSalesPersons] = useState<UserType[]>([]);
 
     // Customer Logic
-    const [customerName, setCustomerName] = useState('');
-    const [customerContact, setCustomerContact] = useState('');
+    const [customerName, setCustomerName] = useState(sale.customerName || '');
+    const [customerContact, setCustomerContact] = useState(sale.customerContact || '');
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
     const [showCustomerSuggestions, setShowCustomerSuggestions] = useState(false);
@@ -58,30 +60,25 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
     // Product Logic
     const [products, setProducts] = useState<ProductDTO[]>([]);
     const [filteredProducts, setFilteredProducts] = useState<ProductDTO[]>([]);
-    const [itemName, setItemName] = useState('');
+    const [itemName, setItemName] = useState(sale.item);
     const [showProductSuggestions, setShowProductSuggestions] = useState(false);
     const productWrapperRef = useRef<HTMLDivElement>(null);
 
     // Form fields linked to auto-fill
-    const [storeCode, setStoreCode] = useState('');
-    const [storeName, setStoreName] = useState('');
-    const [city, setCity] = useState('');
-    const [region, setRegion] = useState('');
-    const [salesPerson, setSalesPerson] = useState('');
+    const [storeCode, setStoreCode] = useState(sale.storeCode);
+    const [storeName, setStoreName] = useState(sale.storeName);
+    const [city, setCity] = useState(sale.city);
+    const [region, setRegion] = useState(sale.region);
+    const [salesPerson, setSalesPerson] = useState(sale.salesPerson);
 
     useEffect(() => {
         getStores().then(setStores);
         getCustomers().then(setCustomers);
         getProducts().then(setProducts);
 
-        // Setup based on role
-        if (user?.role === 'SALES') {
-            setSalesPerson(user.name || '');
-        } else if (user?.role === 'ADMIN' || user?.role === 'WAREHOUSE' || user?.role === 'ACCOUNTANT') {
-            getUsers().then(users => {
-                setSalesPersons(users as UserType[]);
-            });
-        }
+        getUsers().then(users => {
+            setSalesPersons(users as UserType[]);
+        });
 
         // Click outside to close suggestions
         function handleClickOutside(event: MouseEvent) {
@@ -97,7 +94,7 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
         }
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [user]);
+    }, []);
 
     const handleCustomerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -141,7 +138,6 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
 
     // Calculate discounted price (for display and final total)
     const calculateDiscountedPrice = () => {
-        if (!discountRate || discountRate <= 0) return unitPrice;
         return unitPrice * (1 - discountRate / 100);
     };
 
@@ -176,31 +172,28 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const form = e.currentTarget as HTMLFormElement;
-        const formData = new FormData(form);
-
         try {
-            const rawData = Object.fromEntries(formData.entries());
-
-            await createSale({
-                date: rawData.date as string,
-                storeCode: storeCode, // Use state
-                region: region,       // Use state
-                city: city,          // Use state
-                storeName: storeName, // Use state
-                salesPerson: salesPerson, // Use state
+            await updateSale(sale.id!, {
+                date: date,
+                storeCode: storeCode,
+                region: region,
+                city: city,
+                storeName: storeName,
+                salesPerson: salesPerson,
                 customerName: customerName,
                 customerContact: customerContact,
-                item: itemName, // Use state
+                item: itemName,
                 quantity: quantity,
-                price: calculateDiscountedPrice(), // Use discounted price as the effective unit price for the record
+                price: calculateDiscountedPrice(),
                 total: totalPrice,
                 profit: netProfit,
             });
 
+            // Reload page to reflect changes
+            window.location.reload();
             onClose();
         } catch (error) {
-            alert('Satış eklenirken bir hata oluştu.');
+            alert('Satış güncellenirken bir hata oluştu.');
         }
     };
 
@@ -208,7 +201,7 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-card w-full max-w-2xl rounded-2xl border border-border flex flex-col max-h-[90vh]">
                 <div className="p-6 border-b border-border flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-foreground">Yeni Satış Ekle</h2>
+                    <h2 className="text-xl font-bold text-foreground">Satışı Düzenle</h2>
                     <button onClick={onClose} className="text-muted hover:text-foreground transition-colors">
                         <X size={24} />
                     </button>
@@ -219,7 +212,14 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-secondary-foreground">Tarih</label>
-                                <input type="date" name="date" required className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all" />
+                                <input
+                                    type="date"
+                                    name="date"
+                                    value={date}
+                                    onChange={(e) => setDate(e.target.value)}
+                                    required
+                                    className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all"
+                                />
                             </div>
                             <div className="space-y-2 relative" ref={wrapperRef}>
                                 <label className="text-sm font-medium text-secondary-foreground">Mağaza Kodu / Adı Ara</label>
@@ -266,8 +266,8 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
                                     type="text"
                                     name="region"
                                     value={region}
-                                    readOnly
-                                    className="w-full bg-secondary/10 border border-border rounded-lg px-4 py-2.5 text-muted-foreground outline-none cursor-not-allowed"
+                                    onChange={(e) => setRegion(e.target.value)} // Editable for corrections
+                                    className="w-full bg-secondary/10 border border-border rounded-lg px-4 py-2.5 text-foreground outline-none"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -276,8 +276,8 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
                                     type="text"
                                     name="city"
                                     value={city}
-                                    readOnly
-                                    className="w-full bg-secondary/10 border border-border rounded-lg px-4 py-2.5 text-muted-foreground outline-none cursor-not-allowed"
+                                    onChange={(e) => setCity(e.target.value)} // Editable for corrections
+                                    className="w-full bg-secondary/10 border border-border rounded-lg px-4 py-2.5 text-foreground outline-none"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -286,8 +286,8 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
                                     type="text"
                                     name="storeName"
                                     value={storeName}
-                                    readOnly
-                                    className="w-full bg-secondary/10 border border-border rounded-lg px-4 py-2.5 text-muted-foreground outline-none cursor-not-allowed"
+                                    onChange={(e) => setStoreName(e.target.value)} // Editable
+                                    className="w-full bg-secondary/10 border border-border rounded-lg px-4 py-2.5 text-foreground outline-none"
                                 />
                             </div>
                         </div>
@@ -343,41 +343,33 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
 
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-secondary-foreground">Satış Personeli</label>
-                            {user?.role === 'SALES' ? (
+
+                            {salesPersons.length > 0 ? (
+                                <div className="flex gap-2">
+                                    <select
+                                        name="salesPersonSelect"
+                                        value={salesPerson}
+                                        onChange={(e) => setSalesPerson(e.target.value)}
+                                        className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="">Personel Seçiniz...</option>
+                                        {salesPersons.map(p => (
+                                            <option key={p.id} value={p.name}>{p.name} ({p.role})</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            ) : (
                                 <input
                                     type="text"
                                     name="salesPerson"
                                     value={salesPerson}
-                                    readOnly
-                                    className="w-full bg-secondary/10 border border-border rounded-lg px-4 py-2.5 text-muted-foreground outline-none cursor-not-allowed"
+                                    onChange={(e) => setSalesPerson(e.target.value)}
+                                    placeholder="Ad Soyad"
+                                    required
+                                    className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all"
                                 />
-                            ) : (
-                                salesPersons.length > 0 ? (
-                                    <div className="flex gap-2">
-                                        <select
-                                            name="salesPersonSelect"
-                                            value={salesPerson}
-                                            onChange={(e) => setSalesPerson(e.target.value)}
-                                            className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all appearance-none cursor-pointer"
-                                        >
-                                            <option value="">Personel Seçiniz...</option>
-                                            {salesPersons.map(p => (
-                                                <option key={p.id} value={p.name}>{p.name} ({p.role})</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                ) : (
-                                    <input
-                                        type="text"
-                                        name="salesPerson"
-                                        value={salesPerson}
-                                        onChange={(e) => setSalesPerson(e.target.value)}
-                                        placeholder="Ad Soyad"
-                                        required
-                                        className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all"
-                                    />
-                                )
                             )}
+
                         </div>
 
                         {/* Product Search */}
@@ -510,7 +502,7 @@ export function AddSaleForm({ onClose, user }: AddSaleFormProps) {
                                 İptal
                             </button>
                             <button type="submit" className="bg-primary hover:bg-primary/90 text-white px-8 py-2.5 rounded-xl font-medium shadow-lg shadow-primary/25 transition-all active:scale-95">
-                                Kaydet
+                                Güncelle
                             </button>
                         </div>
                     </form>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ProductDTO, createProduct, updateProduct, deleteProduct } from '@/app/actions/products';
-import { Plus, Search, Edit2, Trash2, X, Loader2, Save } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Loader2, Save, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface ProductsClientProps {
@@ -19,8 +19,10 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
 
     const filteredProducts = products.filter(p =>
         p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.productNumber.toLowerCase().includes(search.toLowerCase())
+        (p.productNumber || '').toLowerCase().includes(search.toLowerCase())
     );
+
+
 
     const handleDelete = async (id: string) => {
         if (!confirm('Bu ürünü silmek istediğinize emin misiniz?')) return;
@@ -29,7 +31,6 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
         const result = await deleteProduct(id);
         if (result.success) {
             router.refresh();
-            // Optimistic update
             setProducts(products.filter(p => p.id !== id));
         } else {
             alert('Silme işlemi başarısız oldu.');
@@ -50,13 +51,15 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                         className="w-full pl-10 pr-4 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-primary/50 outline-none"
                     />
                 </div>
-                <button
-                    onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
-                    className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
-                >
-                    <Plus size={18} />
-                    Yeni Ürün
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
+                        className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
+                    >
+                        <Plus size={18} />
+                        Yeni Ürün
+                    </button>
+                </div>
             </div>
 
             <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
@@ -91,7 +94,7 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                                 <Edit2 size={16} />
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(product.id)}
+                                                onClick={() => handleDelete(product.id || '')}
                                                 className="p-1.5 hover:bg-secondary rounded-md text-red-500 transition-colors"
                                             >
                                                 <Trash2 size={16} />
@@ -142,12 +145,12 @@ function ProductModal({ product, onClose, onSuccess }: { product: ProductDTO | n
 
         const data = {
             name,
-            price: price ? parseFloat(price) : undefined,
+            price: price ? parseFloat(price) : 0, // Ensure strictly number, 0 if empty/invalid
             productNumber: productNumber || undefined
         };
 
         let result;
-        if (product) {
+        if (product && product.id) {
             // For update, productNumber is required (or we pass explicitly what we have)
             result = await updateProduct(product.id, {
                 ...data,

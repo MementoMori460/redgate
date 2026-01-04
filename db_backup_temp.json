@@ -1,0 +1,958 @@
+{
+  "users": [
+    {
+      "id": "12156ee5-c8bb-48e5-982c-35635f877ef0",
+      "username": "admin",
+      "password": "$2b$10$Gy8rWuedBpQSqjFvB4XNZ.NC/aPa4fm5S9WnkuRu/zsKz4YRFycTi",
+      "name": "Yönetici",
+      "role": "ADMIN",
+      "createdAt": "2026-01-02T23:41:09.594Z",
+      "updatedAt": "2026-01-02T23:54:03.788Z"
+    },
+    {
+      "id": "ef04fd9c-a654-4dff-8fb0-73fcdd958243",
+      "username": "memento",
+      "password": "$2b$10$bhrcNjxXA/vBF7pvCEzKie2/OTune9q.R7P/qAyLLPHoVe50ol8Ne",
+      "name": "Mehmet YILMAZ",
+      "role": "SALES",
+      "createdAt": "2026-01-03T00:06:49.315Z",
+      "updatedAt": "2026-01-03T00:06:49.315Z"
+    },
+    {
+      "id": "29c77a87-c4bd-42d8-b00b-7a058f9d9708",
+      "username": "eş",
+      "password": "$2b$10$qUJVNhwqRkkatpdOTWqxxOv5dOEvkh0HZYgrkKgTCx0lShgy1sHda",
+      "name": "Emrah Şirin",
+      "role": "WAREHOUSE",
+      "createdAt": "2026-01-03T00:18:03.279Z",
+      "updatedAt": "2026-01-03T00:18:03.279Z"
+    },
+    {
+      "id": "aae8ba07-5747-446c-8388-2e2c225a4a65",
+      "username": "öy",
+      "password": "$2b$10$05M6OSHYrmwVfmBryyjL0uYS1.bLQVD/6QKJM.INJYfnNXvpQuFgy",
+      "name": "Özlem YILMAZ",
+      "role": "SALES",
+      "createdAt": "2026-01-03T00:18:48.397Z",
+      "updatedAt": "2026-01-03T00:18:48.397Z"
+    }
+  ],
+  "stores": [
+    {
+      "id": "460bb5d6-4cec-44ea-9a59-6ffa2948a5f4",
+      "code": "T001",
+      "name": "MM ÜMRANİYE MEYDAN",
+      "city": "İSTANBUL",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.640Z",
+      "updatedAt": "2026-01-02T23:54:03.640Z"
+    },
+    {
+      "id": "83712bf7-cd57-468c-a786-61c165211610",
+      "code": "T002",
+      "name": "MM ESKİŞEHİR",
+      "city": "ESKİŞEHİR",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.642Z",
+      "updatedAt": "2026-01-02T23:54:03.642Z"
+    },
+    {
+      "id": "b0d2d92e-f31f-4253-86c1-fa1782b2446b",
+      "code": "T003",
+      "name": "MM MERSİN",
+      "city": "MERSİN",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.643Z",
+      "updatedAt": "2026-01-02T23:54:03.643Z"
+    },
+    {
+      "id": "8e376201-4bee-45ec-b2e2-1c2b0027eb26",
+      "code": "T004",
+      "name": "MM İSTANBUL BEYLİKDÜZÜ",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.643Z",
+      "updatedAt": "2026-01-02T23:54:03.643Z"
+    },
+    {
+      "id": "1d71224e-480c-48c1-9718-7b26ab216d00",
+      "code": "T005",
+      "name": "MM ANKARA OPTIMUM",
+      "city": "ANKARA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.644Z",
+      "updatedAt": "2026-01-02T23:54:03.644Z"
+    },
+    {
+      "id": "4ac2d5d4-bd79-4688-8d85-e9f01997a0c7",
+      "code": "T006",
+      "name": "MM ANKARA FORUM",
+      "city": "ANKARA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.644Z",
+      "updatedAt": "2026-01-02T23:54:03.644Z"
+    },
+    {
+      "id": "a14eed24-7a46-4571-aec6-a9ccce32471b",
+      "code": "T007",
+      "name": "MM İSTANBUL KOZYATAĞI",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.645Z",
+      "updatedAt": "2026-01-02T23:54:03.645Z"
+    },
+    {
+      "id": "2150de4c-0d05-46d6-87be-a8bbb0492347",
+      "code": "T008",
+      "name": "MM BURSA 1 NİLPARK",
+      "city": "BURSA",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.646Z",
+      "updatedAt": "2026-01-02T23:54:03.646Z"
+    },
+    {
+      "id": "e2e34753-0ed3-427a-b577-4fc70b15f76c",
+      "code": "T009",
+      "name": "MM ADANA 1 M1 AVM",
+      "city": "ADANA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.647Z",
+      "updatedAt": "2026-01-02T23:54:03.647Z"
+    },
+    {
+      "id": "ce75a85a-0e78-4170-a1df-0646e7f1413a",
+      "code": "T010",
+      "name": "MM İSTANBUL 212 GÜNEŞLİ",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.648Z",
+      "updatedAt": "2026-01-02T23:54:03.648Z"
+    },
+    {
+      "id": "3c5e856d-19b1-42fc-adbc-17a2e9564b77",
+      "code": "T012",
+      "name": "MM İZMİR BALÇOVA",
+      "city": "İZMİR",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.649Z",
+      "updatedAt": "2026-01-02T23:54:03.649Z"
+    },
+    {
+      "id": "da4cc182-ff2c-41d0-838c-2749309d7be2",
+      "code": "T013",
+      "name": "MM İSTANBUL PENDİK",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.649Z",
+      "updatedAt": "2026-01-02T23:54:03.649Z"
+    },
+    {
+      "id": "3ea33035-c5bd-425b-86f7-463223f21bd7",
+      "code": "T014",
+      "name": "MM ANKARA KENTPARK",
+      "city": "ANKARA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.650Z",
+      "updatedAt": "2026-01-02T23:54:03.650Z"
+    },
+    {
+      "id": "0b37fdb9-562a-427d-b491-b49bcb9c688e",
+      "code": "T016",
+      "name": "MM BURSA ANATOLIUM",
+      "city": "BURSA",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.651Z",
+      "updatedAt": "2026-01-02T23:54:03.651Z"
+    },
+    {
+      "id": "b77b7f97-3860-4711-a5f1-87578ba381a7",
+      "code": "T017",
+      "name": "MM ADANA 2 OPTİMUM",
+      "city": "ADANA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.651Z",
+      "updatedAt": "2026-01-02T23:54:03.651Z"
+    },
+    {
+      "id": "a8bf0aef-1b2b-4939-a02b-f17a77cab2c4",
+      "code": "T018",
+      "name": "MM KAYSERİ",
+      "city": "KAYSERİ",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.652Z",
+      "updatedAt": "2026-01-02T23:54:03.652Z"
+    },
+    {
+      "id": "ccffc747-8861-4eb5-9e0d-258815ae2bae",
+      "code": "T020",
+      "name": "MM ANTALYA 1 KEPEZ",
+      "city": "ANTALYA",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.653Z",
+      "updatedAt": "2026-01-02T23:54:03.653Z"
+    },
+    {
+      "id": "ae9b4185-b4c8-49b7-8c96-a9284c5c37c1",
+      "code": "T022",
+      "name": "MM KONYA M1",
+      "city": "KONYA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.653Z",
+      "updatedAt": "2026-01-02T23:54:03.653Z"
+    },
+    {
+      "id": "5a879977-2bd0-48ba-93b5-7dda26888e42",
+      "code": "T024",
+      "name": "MM ANKARA ANTARES",
+      "city": "ANKARA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.657Z",
+      "updatedAt": "2026-01-02T23:54:03.657Z"
+    },
+    {
+      "id": "cd88ee58-3fb5-4722-af98-ee120d823b7c",
+      "code": "T025",
+      "name": "MM SAMSUN PİAZZA",
+      "city": "SAMSUN",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.658Z",
+      "updatedAt": "2026-01-02T23:54:03.658Z"
+    },
+    {
+      "id": "1ef2667f-a99d-49fb-8b46-db9297e9108e",
+      "code": "T026",
+      "name": "MM KAHRAMANMARAŞ",
+      "city": "KAHRAMANMARAŞ",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.658Z",
+      "updatedAt": "2026-01-02T23:54:03.658Z"
+    },
+    {
+      "id": "a70541a9-04af-453d-8d27-4755bf542aef",
+      "code": "T027",
+      "name": "MM İSTANBUL KAĞITHANE",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.659Z",
+      "updatedAt": "2026-01-02T23:54:03.659Z"
+    },
+    {
+      "id": "1a201a8b-6244-4e69-b90b-746f3a3ca598",
+      "code": "T028",
+      "name": "MM AYDIN FORUM",
+      "city": "AYDIN",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.660Z",
+      "updatedAt": "2026-01-02T23:54:03.660Z"
+    },
+    {
+      "id": "fb8bb8ac-fd85-41d0-b096-6c1ffa07b226",
+      "code": "T030",
+      "name": "MM GAZİANTEP FORUM",
+      "city": "GAZİANTEP",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.660Z",
+      "updatedAt": "2026-01-02T23:54:03.660Z"
+    },
+    {
+      "id": "2ab79931-1b07-4410-9223-9733941d3b3e",
+      "code": "T031",
+      "name": "MM ŞANLIURFA",
+      "city": "ŞANLIURFA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.661Z",
+      "updatedAt": "2026-01-02T23:54:03.661Z"
+    },
+    {
+      "id": "b841fe8f-f03e-4ad1-b4a3-c15091de6c3a",
+      "code": "T032",
+      "name": "MM İZMİT 1 BAVARİA",
+      "city": "İZMİT",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.662Z",
+      "updatedAt": "2026-01-02T23:54:03.662Z"
+    },
+    {
+      "id": "75cad28f-9fcf-4ff1-902d-00dff2c75fe4",
+      "code": "T033",
+      "name": "MM MALL OF İSTANBUL",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.662Z",
+      "updatedAt": "2026-01-02T23:54:03.662Z"
+    },
+    {
+      "id": "9c37b3a7-1b4b-4e48-bb99-487a328b6239",
+      "code": "T034",
+      "name": "MM DENİZLİ TERASPARK",
+      "city": "DENİZLİ",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.663Z",
+      "updatedAt": "2026-01-02T23:54:03.663Z"
+    },
+    {
+      "id": "0280b184-3a53-43b4-b254-6a6f77bb5652",
+      "code": "T035",
+      "name": "MM MALATYA",
+      "city": "MALATYA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.663Z",
+      "updatedAt": "2026-01-02T23:54:03.663Z"
+    },
+    {
+      "id": "94628d24-af16-45d4-9d31-122770d9bab2",
+      "code": "T037",
+      "name": "MM İSTANBUL ÖZDİLEK AVM",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.664Z",
+      "updatedAt": "2026-01-02T23:54:03.664Z"
+    },
+    {
+      "id": "d30796b8-cedc-41d5-988b-810aee06b6cb",
+      "code": "T039",
+      "name": "MM ANKARA KIZILAY",
+      "city": "ANKARA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.665Z",
+      "updatedAt": "2026-01-02T23:54:03.665Z"
+    },
+    {
+      "id": "dede1a52-2b65-44d0-ab19-787a82afea65",
+      "code": "T041",
+      "name": "MM İZMİR POİNT BORNOVA",
+      "city": "İZMİR",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.665Z",
+      "updatedAt": "2026-01-02T23:54:03.665Z"
+    },
+    {
+      "id": "e795139c-be11-4d59-be70-01dd42cc3cb1",
+      "code": "T045",
+      "name": "MM ANKARA NATA VEGA",
+      "city": "ANKARA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.665Z",
+      "updatedAt": "2026-01-02T23:54:03.665Z"
+    },
+    {
+      "id": "0e9fcac0-40f6-45c0-8f7a-f84413aaea5e",
+      "code": "T046",
+      "name": "MM İSTANBUL LEVENT",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.666Z",
+      "updatedAt": "2026-01-02T23:54:03.666Z"
+    },
+    {
+      "id": "c9159900-fdc9-432e-82a3-2904e7dae0fe",
+      "code": "T047",
+      "name": "MM İSTANBUL VİAPORT",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.667Z",
+      "updatedAt": "2026-01-02T23:54:03.667Z"
+    },
+    {
+      "id": "f75ff8e6-912a-4f06-a084-5efd8597ac17",
+      "code": "T048",
+      "name": "MM KONYA KULE SİTE",
+      "city": "KONYA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.667Z",
+      "updatedAt": "2026-01-02T23:54:03.667Z"
+    },
+    {
+      "id": "7dcb4215-72eb-4501-ba79-4d3bb88fd4db",
+      "code": "T049",
+      "name": "MM ANKARA ANKAMALL",
+      "city": "ANKARA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.668Z",
+      "updatedAt": "2026-01-02T23:54:03.668Z"
+    },
+    {
+      "id": "fa680583-ec9f-4468-8cfc-1c8bf562867b",
+      "code": "T050",
+      "name": "MM ANTALYA 2 TERRA CİTY",
+      "city": "ANTALYA",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.669Z",
+      "updatedAt": "2026-01-02T23:54:03.669Z"
+    },
+    {
+      "id": "817d3135-f9ea-4b12-99e1-89a76d8a1f13",
+      "code": "T051",
+      "name": "MM GAZİANTEP SANKOPARK",
+      "city": "GAZİANTEP",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.669Z",
+      "updatedAt": "2026-01-02T23:54:03.669Z"
+    },
+    {
+      "id": "4c6c4963-15b8-4871-a56e-d7fa14ca435c",
+      "code": "T052",
+      "name": "MM BURSA ÖZDİLEK",
+      "city": "BURSA",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.670Z",
+      "updatedAt": "2026-01-02T23:54:03.670Z"
+    },
+    {
+      "id": "6189dbf7-5acd-4049-9a51-a85530c0b9e9",
+      "code": "T219",
+      "name": "MM ADANA ADANORM",
+      "city": "ADANA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.671Z",
+      "updatedAt": "2026-01-02T23:54:03.671Z"
+    },
+    {
+      "id": "c8607ba3-e8e9-4c83-afb5-963af78726d0",
+      "code": "T055",
+      "name": "MM ANTALYA 3 MALL OF",
+      "city": "ANTALYA",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.671Z",
+      "updatedAt": "2026-01-02T23:54:03.671Z"
+    },
+    {
+      "id": "1e28937a-73e7-4b54-aa69-b44e4d65dd71",
+      "code": "T056",
+      "name": "MM İSTANBUL EMAAR AVM",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.672Z",
+      "updatedAt": "2026-01-02T23:54:03.672Z"
+    },
+    {
+      "id": "004027ca-251f-4c7d-b0af-af16128ec74e",
+      "code": "T059",
+      "name": "MM ERZURUM MNG AVM",
+      "city": "ERZURUM",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.673Z",
+      "updatedAt": "2026-01-02T23:54:03.673Z"
+    },
+    {
+      "id": "cea3a8d7-5ce0-4227-850e-3c6e6c278ec7",
+      "code": "T060",
+      "name": "MM ANKARA METROMALL",
+      "city": "ANKARA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.673Z",
+      "updatedAt": "2026-01-02T23:54:03.673Z"
+    },
+    {
+      "id": "4fc08bbe-ee08-4430-8d08-210ad33ba69d",
+      "code": "T061",
+      "name": "MM ÇORUM AHL PARK AVM",
+      "city": "ÇORUM",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.674Z",
+      "updatedAt": "2026-01-02T23:54:03.674Z"
+    },
+    {
+      "id": "e79f1b62-df6c-4f19-9c02-cedcb472c0cc",
+      "code": "T062",
+      "name": "MM METRO GARDEN",
+      "city": "ERZURUM",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.674Z",
+      "updatedAt": "2026-01-02T23:54:03.674Z"
+    },
+    {
+      "id": "39d9f9fa-557e-4643-aa31-b9a9cc0149dd",
+      "code": "T063",
+      "name": "MM SAKARYA SERDİVAN AVM",
+      "city": "SAKARYA",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.675Z",
+      "updatedAt": "2026-01-02T23:54:03.675Z"
+    },
+    {
+      "id": "64e632e1-fa38-46aa-85fd-cb7de25372e8",
+      "code": "T065",
+      "name": "MM ÇORLU KİPA AVM",
+      "city": "ÇORLU",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.676Z",
+      "updatedAt": "2026-01-02T23:54:03.676Z"
+    },
+    {
+      "id": "6649be15-0f61-4316-a80b-88f2b07ba5b6",
+      "code": "T066",
+      "name": "MM BURSA OSMANGAZİ KORUPARK",
+      "city": "BURSA",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.676Z",
+      "updatedAt": "2026-01-02T23:54:03.676Z"
+    },
+    {
+      "id": "c2274e5e-5b17-461a-b4f1-3ad45e4f735c",
+      "code": "T067",
+      "name": "MM ANKARA GORDİON AVM",
+      "city": "ANKARA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.677Z",
+      "updatedAt": "2026-01-02T23:54:03.677Z"
+    },
+    {
+      "id": "741b9779-05f1-491b-a513-ff05a254091f",
+      "code": "T072",
+      "name": "MM İSTANBUL MALTEPE PİAZZA",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.678Z",
+      "updatedAt": "2026-01-02T23:54:03.678Z"
+    },
+    {
+      "id": "0c442122-f3ea-465f-99b5-033e193a3281",
+      "code": "T073",
+      "name": "MM ÇANAKKALE KİPA AVM",
+      "city": "ÇANAKKALE",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.678Z",
+      "updatedAt": "2026-01-02T23:54:03.678Z"
+    },
+    {
+      "id": "b1b9256d-5750-4e17-a90d-b9f1dca9d06d",
+      "code": "T074",
+      "name": "MM İSTANBUL CAPACİTY AVM",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.679Z",
+      "updatedAt": "2026-01-02T23:54:03.679Z"
+    },
+    {
+      "id": "7bbb08dd-bb72-42f6-90ce-89ee98162eeb",
+      "code": "T075",
+      "name": "MM BALIKESİR EDREMİT",
+      "city": "BALIKESİR",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.679Z",
+      "updatedAt": "2026-01-02T23:54:03.679Z"
+    },
+    {
+      "id": "ece84fde-f2b5-4c7a-a443-1a4ceee5a11a",
+      "code": "T076",
+      "name": "MM MUĞLA BODRUM MİDTOWN",
+      "city": "MUĞLA",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.680Z",
+      "updatedAt": "2026-01-02T23:54:03.680Z"
+    },
+    {
+      "id": "635cdbe0-ee9b-4e43-a68d-f5d542d009cb",
+      "code": "T078",
+      "name": "MM İZMİR PARK AVM",
+      "city": "İZMİR",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.680Z",
+      "updatedAt": "2026-01-02T23:54:03.680Z"
+    },
+    {
+      "id": "2b9c4505-1756-4d80-8313-6ac3ff7f2261",
+      "code": "T079",
+      "name": "MM BRANDİUM AVM",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.681Z",
+      "updatedAt": "2026-01-02T23:54:03.681Z"
+    },
+    {
+      "id": "9cb585a0-7772-49c6-86e0-4acd45ae5ee2",
+      "code": "T080",
+      "name": "MM ANKARA ATLANTİS",
+      "city": "ANKARA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.682Z",
+      "updatedAt": "2026-01-02T23:54:03.682Z"
+    },
+    {
+      "id": "72d6eea6-f99f-41e9-99bf-f2e1b114ca91",
+      "code": "T081",
+      "name": "MM BALIKESİR 10 BURDA",
+      "city": "BALIKESİR",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.682Z",
+      "updatedAt": "2026-01-02T23:54:03.682Z"
+    },
+    {
+      "id": "2c2e6364-655f-48ac-9618-0c5fbdaca415",
+      "code": "T082",
+      "name": "MM DİYARBAKIR KARAVİL",
+      "city": "DİYARBAKIR",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.683Z",
+      "updatedAt": "2026-01-02T23:54:03.683Z"
+    },
+    {
+      "id": "ca329174-e886-45fa-be01-aa5d9e1b91a3",
+      "code": "T083",
+      "name": "MM İZMİR FORUM BORNOVA AVM",
+      "city": "İZMİR",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.683Z",
+      "updatedAt": "2026-01-02T23:54:03.683Z"
+    },
+    {
+      "id": "8d6a6cf4-cefd-45bd-8b51-256867211d5e",
+      "code": "T084",
+      "name": "MM İSTANBUL METROPOL AVM",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.684Z",
+      "updatedAt": "2026-01-02T23:54:03.684Z"
+    },
+    {
+      "id": "4beb07e3-3d18-4c6f-b90a-af28e001a6fe",
+      "code": "T085",
+      "name": "MM ESKİŞEHİR VEGA AVM",
+      "city": "ESKİŞEHİR",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.684Z",
+      "updatedAt": "2026-01-02T23:54:03.684Z"
+    },
+    {
+      "id": "02310af6-b9b1-400e-9971-2bf2e09bdbd1",
+      "code": "T086",
+      "name": "MM İSTANBUL HİLLTOWN AVM",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.685Z",
+      "updatedAt": "2026-01-02T23:54:03.685Z"
+    },
+    {
+      "id": "b152a150-a90a-4f7b-95d0-9fe87db199a1",
+      "code": "T087",
+      "name": "MM KOCAELİ GEBZE CENTER",
+      "city": "KOCAELİ",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.685Z",
+      "updatedAt": "2026-01-02T23:54:03.685Z"
+    },
+    {
+      "id": "55969c8c-b222-46c9-9b16-3be0b8547031",
+      "code": "T088",
+      "name": "MM İZMİR KARŞIYAKA HİLLTOWN",
+      "city": "İZMİR",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.686Z",
+      "updatedAt": "2026-01-02T23:54:03.686Z"
+    },
+    {
+      "id": "08aae6c8-ad62-47ae-961b-f418216c0e90",
+      "code": "T089",
+      "name": "MM İSTANBUL VEGA AVM",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.687Z",
+      "updatedAt": "2026-01-02T23:54:03.687Z"
+    },
+    {
+      "id": "2d23a652-8a30-49e4-baa8-a82362c8a9f0",
+      "code": "T090",
+      "name": "MM İST. ÜSKÜDAR NEVÇARŞI AVM",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.688Z",
+      "updatedAt": "2026-01-02T23:54:03.688Z"
+    },
+    {
+      "id": "4617830e-e003-47fe-868d-1bac41e66c66",
+      "code": "T091",
+      "name": "MM ANTALYA MİGROS",
+      "city": "ANTALYA",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.688Z",
+      "updatedAt": "2026-01-02T23:54:03.688Z"
+    },
+    {
+      "id": "5044e669-1490-4237-ae17-f4dee82c249f",
+      "code": "T092",
+      "name": "MM İSTANBUL TORİUM",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.689Z",
+      "updatedAt": "2026-01-02T23:54:03.689Z"
+    },
+    {
+      "id": "d40159af-0f90-45b7-9b4b-16ea93406d55",
+      "code": "T093",
+      "name": "MM TEKİRDAĞ TEKİRA",
+      "city": "TEKİRDAĞ",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.692Z",
+      "updatedAt": "2026-01-02T23:54:03.692Z"
+    },
+    {
+      "id": "ae159927-cd8d-4179-9e6b-de50e6333dac",
+      "code": "T094",
+      "name": "MM MERSİN SAYAPARK",
+      "city": "MERSİN",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.693Z",
+      "updatedAt": "2026-01-02T23:54:03.693Z"
+    },
+    {
+      "id": "beab7788-e15b-4a90-a30d-70e275489340",
+      "code": "T095",
+      "name": "MM VAN",
+      "city": "VAN",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.693Z",
+      "updatedAt": "2026-01-02T23:54:03.693Z"
+    },
+    {
+      "id": "53c2f2c2-9629-427d-9f3e-ed9711c28727",
+      "code": "T097",
+      "name": "MM İZMİR İSTİNYEPARK",
+      "city": "İZMİR",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.694Z",
+      "updatedAt": "2026-01-02T23:54:03.694Z"
+    },
+    {
+      "id": "008479e2-e3ac-4221-9e05-acec95136918",
+      "code": "T098",
+      "name": "MM BAHÇEŞEHİR MİGROS",
+      "city": "BAHÇEŞEHİR",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.694Z",
+      "updatedAt": "2026-01-02T23:54:03.694Z"
+    },
+    {
+      "id": "c6ad7095-24e1-48d8-8132-e507c451184f",
+      "code": "T099",
+      "name": "MM BURSA KENTMEYDANI",
+      "city": "BURSA",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.695Z",
+      "updatedAt": "2026-01-02T23:54:03.695Z"
+    },
+    {
+      "id": "bbdd252e-e468-4a7b-a698-dcc317a45f29",
+      "code": "T200",
+      "name": "MM ZORLU CENTER",
+      "city": "ZORLU",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.696Z",
+      "updatedAt": "2026-01-02T23:54:03.696Z"
+    },
+    {
+      "id": "ca16f25b-e785-410e-8501-e4540a0cff60",
+      "code": "T201",
+      "name": "MM İZMİT 41 BURDA",
+      "city": "İZMİT",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.696Z",
+      "updatedAt": "2026-01-02T23:54:03.696Z"
+    },
+    {
+      "id": "0f661301-a42c-475f-85ce-167062022f04",
+      "code": "T202",
+      "name": "MM İSTMARİNA",
+      "city": "İSTMARİNA",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.697Z",
+      "updatedAt": "2026-01-02T23:54:03.697Z"
+    },
+    {
+      "id": "cec4be01-07bf-4b92-b6af-626eb979f721",
+      "code": "T203",
+      "name": "MM DİYARBAKIR 3 FORUM",
+      "city": "DİYARBAKIR",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.698Z",
+      "updatedAt": "2026-01-02T23:54:03.698Z"
+    },
+    {
+      "id": "44703442-2fe9-43e6-89b7-eec131dc9f60",
+      "code": "T204",
+      "name": "MM BALIKESİR BANDIRMA LİMAN",
+      "city": "BALIKESİR",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.698Z",
+      "updatedAt": "2026-01-02T23:54:03.698Z"
+    },
+    {
+      "id": "3e91c57a-f84e-4640-93a9-744fba26f211",
+      "code": "T205",
+      "name": "MM ANKARA 13 PANORA",
+      "city": "ANKARA",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.699Z",
+      "updatedAt": "2026-01-02T23:54:03.699Z"
+    },
+    {
+      "id": "fbf8091d-8790-47a8-8fca-75883eb5b21c",
+      "code": "T206",
+      "name": "MM ANTALYA ALANYA",
+      "city": "ANTALYA",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.699Z",
+      "updatedAt": "2026-01-02T23:54:03.699Z"
+    },
+    {
+      "id": "1d46e569-67ba-4705-a2ce-867b2159530c",
+      "code": "T207",
+      "name": "MM MARKANTALYA",
+      "city": "MARKANTALYA",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.700Z",
+      "updatedAt": "2026-01-02T23:54:03.700Z"
+    },
+    {
+      "id": "79fba86c-3123-439d-bf04-bb38b4c20e18",
+      "code": "T208",
+      "name": "MM ISPARTA MEYDAN",
+      "city": "ISPARTA",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.700Z",
+      "updatedAt": "2026-01-02T23:54:03.700Z"
+    },
+    {
+      "id": "28e8095d-4c3f-4189-8e6a-1435f2bf7bb3",
+      "code": "T209",
+      "name": "MM BURSA İNEGÖL",
+      "city": "BURSA",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.701Z",
+      "updatedAt": "2026-01-02T23:54:03.701Z"
+    },
+    {
+      "id": "64a7bdeb-61b0-4bae-9716-90993a3ce41d",
+      "code": "T210",
+      "name": "MM PARK AFYON",
+      "city": "PARK",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.701Z",
+      "updatedAt": "2026-01-02T23:54:03.701Z"
+    },
+    {
+      "id": "cd0e0b88-b111-46a2-b4b0-7ddc522ba53c",
+      "code": "T211",
+      "name": "MM ATLAS PARK İST.",
+      "city": "İSTANBUL",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.702Z",
+      "updatedAt": "2026-01-02T23:54:03.702Z"
+    },
+    {
+      "id": "679834c3-d079-424c-a9c1-c57e50897ea8",
+      "code": "T212",
+      "name": "MM MALTEPE PARK",
+      "city": "MALTEPE",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.702Z",
+      "updatedAt": "2026-01-02T23:54:03.702Z"
+    },
+    {
+      "id": "38b6d07e-ef78-4600-a3f8-3c300e271176",
+      "code": "T213",
+      "name": "MM FORUM TRABZON",
+      "city": "FORUM",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.703Z",
+      "updatedAt": "2026-01-02T23:54:03.703Z"
+    },
+    {
+      "id": "0049ff38-4359-4d7c-a0d7-a567b3a52ecf",
+      "code": "T214",
+      "name": "MM KUŞADASI",
+      "city": "KUŞADASI",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.704Z",
+      "updatedAt": "2026-01-02T23:54:03.704Z"
+    },
+    {
+      "id": "090422fd-c670-4818-b8c6-18411bb27921",
+      "code": "T215",
+      "name": "MM İSKENDERUN PARK FORBES",
+      "city": "İSKENDERUN",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.704Z",
+      "updatedAt": "2026-01-02T23:54:03.704Z"
+    },
+    {
+      "id": "88ce18af-404b-45a8-80fe-e059707b79aa",
+      "code": "T216",
+      "name": "MM MANAVGAT",
+      "city": "MANAVGAT",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.705Z",
+      "updatedAt": "2026-01-02T23:54:03.705Z"
+    },
+    {
+      "id": "b5f5069a-4007-4842-98a5-1449dad98417",
+      "code": "T217",
+      "name": "MM DENİZLİ HORİZON",
+      "city": "DENİZLİ",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.705Z",
+      "updatedAt": "2026-01-02T23:54:03.705Z"
+    },
+    {
+      "id": "4e4826dd-e43f-4970-bb5f-37f5d80e1418",
+      "code": "T218",
+      "name": "MM ELAZIĞ MERKEZ",
+      "city": "ELAZIĞ",
+      "region": "Anadolu",
+      "createdAt": "2026-01-02T23:54:03.706Z",
+      "updatedAt": "2026-01-02T23:54:03.706Z"
+    },
+    {
+      "id": "74ef8598-cf37-4ccc-b183-45cc2070a4b1",
+      "code": "T501",
+      "name": "MM BAYRAMPAŞA FORUM",
+      "city": "BAYRAMPAŞA",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.706Z",
+      "updatedAt": "2026-01-02T23:54:03.706Z"
+    },
+    {
+      "id": "21608781-a438-4608-8f11-86fe279fa820",
+      "code": "T503",
+      "name": "MM MARMARA FORUM",
+      "city": "MARMARA",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.707Z",
+      "updatedAt": "2026-01-02T23:54:03.707Z"
+    },
+    {
+      "id": "8f70ed2c-d9e5-43cd-a433-f9d7296a7b1d",
+      "code": "T504",
+      "name": "MM GAZİEMİR OPTİMUM",
+      "city": "GAZİEMİR",
+      "region": "Ege Akdeniz",
+      "createdAt": "2026-01-02T23:54:03.708Z",
+      "updatedAt": "2026-01-02T23:54:03.708Z"
+    },
+    {
+      "id": "75ac5076-f0dd-43e4-86ee-51c592b6c62b",
+      "code": "T505",
+      "name": "MM ŞİŞLİ TRUMP",
+      "city": "ŞİŞLİ",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.708Z",
+      "updatedAt": "2026-01-02T23:54:03.708Z"
+    },
+    {
+      "id": "f8754145-e41c-4e05-af21-9ac2ea30c85a",
+      "code": "T506",
+      "name": "MM MARMARAPARK",
+      "city": "MARMARAPARK",
+      "region": "Marmara",
+      "createdAt": "2026-01-02T23:54:03.709Z",
+      "updatedAt": "2026-01-02T23:54:03.709Z"
+    }
+  ],
+  "settings": [
+    {
+      "id": "4642f4d5-df3f-4e08-8cd5-2181e33e20dc",
+      "key": "MAX_SHIPPING_DAYS",
+      "value": "3"
+    }
+  ]
+}

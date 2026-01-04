@@ -13,11 +13,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             <Sidebar />
             <main
                 className={clsx(
-                    "flex-1 p-8 bg-background transition-all duration-300 ease-in-out",
+                    "flex-1 p-6 bg-background transition-all duration-300 ease-in-out",
                     isCollapsed ? "md:ml-20" : "md:ml-64"
                 )}
             >
-                {children}
+                <div className="max-w-7xl mx-auto w-full">
+                    {children}
+                </div>
             </main>
         </div>
     );

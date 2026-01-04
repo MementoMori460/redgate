@@ -21,6 +21,10 @@ export type SaleDTO = {
     profit: number
     isShipped?: boolean
     status?: string
+    description?: string
+    waybillNumber?: string
+    invoiceNumber?: string
+    paymentStatus?: string
 }
 
 export async function getSales() {
@@ -35,8 +39,11 @@ export async function getSales() {
         if (role === 'sales') {
             whereClause.salesPerson = name;
         }
-        // CUSTOMER role sees only their own orders (linked by username/contact?)
-        // For now logic primarily supports the Sales Person restriction requested.
+
+        // CUSTOMER role sees only their own orders
+        if (role === 'customer') {
+            whereClause.customerName = name;
+        }
 
         const sales = await prisma.sale.findMany({
             where: whereClause,
@@ -46,6 +53,8 @@ export async function getSales() {
         })
 
         const canSeeProfit = role === 'admin' || role === 'accountant';
+        const canSeeInvoice = role === 'admin' || role === 'accountant';
+        const canSeeWaybill = role === 'admin' || role === 'warehouse' || role === 'manager' || role === 'accountant';
 
         // Convert Decimal and Date to simpler types for Client Components
         return sales.map(sale => ({
@@ -57,9 +66,12 @@ export async function getSales() {
             customerContact: sale.customerContact || '',
             price: sale.price.toNumber(),
             total: sale.total.toNumber(),
-            profit: canSeeProfit ? sale.profit.toNumber() : 0, // Hide profit for others
-            // Add a flag to DTO to indicate if profit is real or masked? 
-            // Better yet, maybe just don't return it or return 0.
+            profit: canSeeProfit ? sale.profit.toNumber() : 0,
+            status: sale.status,
+            description: sale.description || '',
+            waybillNumber: canSeeWaybill ? (sale.waybillNumber || '') : '',
+            invoiceNumber: canSeeInvoice ? (sale.invoiceNumber || '') : '',
+            paymentStatus: canSeeInvoice ? (sale.paymentStatus || 'UNPAID') : '',
         }))
     } catch (error) {
         console.error("Failed to fetch sales:", error)
@@ -85,6 +97,8 @@ export async function createSale(data: SaleDTO) {
                 total: data.total,
                 profit: data.profit,
                 isShipped: data.isShipped || false,
+                status: data.status || 'APPROVED',
+                description: data.description,
             }
         })
         revalidatePath('/')
@@ -100,6 +114,7 @@ export async function createSale(data: SaleDTO) {
             price: newSale.price.toNumber(),
             total: newSale.total.toNumber(),
             profit: newSale.profit.toNumber(),
+            description: newSale.description || '',
         }
 
         return { success: true, data: serializedSale }
@@ -120,6 +135,14 @@ export async function updateSale(id: string, data: Partial<SaleDTO>) {
             where: { id },
             data: updateData
         })
+
+        // Trigger shipping email if marked as shipped
+        if (data.isShipped === true) {
+            // We don't await this to keep UI responsive, or maybe we should to report errors?
+            // Fire and forget for now.
+            sendShippingEmail(id).catch(err => console.error("Failed to trigger email:", err));
+        }
+
         revalidatePath('/')
         return { success: true, data: updatedSale }
     } catch (error) {
@@ -141,17 +164,93 @@ export async function deleteSale(id: string) {
     }
 }
 
-export async function shipSale(id: string) {
+import { sendShippingEmail } from "../utils/notifications";
+
+export async function shipSale(id: string, shippedQuantity: number, waybillNumber: string) {
     try {
-        await prisma.sale.update({
-            where: { id },
-            data: { isShipped: true }
-        })
+        const sale = await prisma.sale.findUnique({ where: { id } });
+        if (!sale) return { success: false, error: "Sale not found" };
+
+        if (shippedQuantity >= sale.quantity) {
+            // Full shipment
+            await prisma.sale.update({
+                where: { id },
+                data: {
+                    isShipped: true,
+                    waybillNumber: waybillNumber,
+                    status: 'SHIPPED'
+                }
+            });
+        } else {
+            // Partial shipment - Split the record
+            // 1. Update the current record to represent the SHIPPED portion
+            const unitPrice = sale.price.toNumber();
+            const unitProfit = sale.profit.toNumber() / sale.quantity; // Approximate per unit profit
+
+            // Update original as the SHIPPED one
+            await prisma.sale.update({
+                where: { id },
+                data: {
+                    quantity: shippedQuantity,
+                    total: unitPrice * shippedQuantity,
+                    profit: unitProfit * shippedQuantity,
+                    isShipped: true,
+                    waybillNumber: waybillNumber,
+                    status: 'SHIPPED',
+                    description: (sale.description || '') + ` (Daha önce ${sale.quantity} adetti, parçalı sevk edildi)`
+                }
+            });
+
+            // 2. Create new record for the REMAINING portion
+            const remainingQty = sale.quantity - shippedQuantity;
+            await prisma.sale.create({
+                data: {
+                    date: sale.date,
+                    storeCode: sale.storeCode,
+                    region: sale.region,
+                    city: sale.city,
+                    storeName: sale.storeName,
+                    salesPerson: sale.salesPerson,
+                    customerName: sale.customerName,
+                    customerContact: sale.customerContact,
+                    item: sale.item,
+                    price: sale.price,
+                    quantity: remainingQty,
+                    total: unitPrice * remainingQty,
+                    profit: unitProfit * remainingQty,
+                    isShipped: false,
+                    status: 'PENDING', // Still pending
+                    description: (sale.description || '') + ` (Parçalı sevk bakiyesi)`,
+                    customerId: sale.customerId
+                }
+            });
+        }
+
+        // Send email notification (fire and forget)
+        sendShippingEmail(id); // Note: If split, ID still points to shipped one, which is correct.
+
         revalidatePath('/')
         return { success: true }
     } catch (error) {
         console.error("Failed to ship sale:", error)
         return { success: false, error: "Failed to ship sale" }
+    }
+}
+
+export async function markSaleAsPaid(id: string, invoiceNumber: string) {
+    try {
+        await prisma.sale.update({
+            where: { id },
+            data: {
+                paymentStatus: 'PAID',
+                invoiceNumber: invoiceNumber
+            }
+        });
+        revalidatePath('/');
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to mark paid:", error);
+        return { success: false, error: "Failed to mark paid" };
     }
 }
 
