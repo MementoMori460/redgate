@@ -124,3 +124,58 @@ export async function sendNewOrderEmailToAdmins(saleId: string) {
         return { success: false, error };
     }
 }
+
+export async function sendBatchOrderEmailToAdmins(sales: any[]) {
+    try {
+        const adminEmail = await getSetting('ADMIN_EMAIL');
+        if (!adminEmail) return;
+
+        const customerName = sales[0].customerName;
+        const totalAmount = sales.reduce((sum: number, s: any) => sum + Number(s.total), 0);
+
+        const itemsHtml = sales.map((s: any) => `
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">${s.item}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">${s.quantity}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee;">${Number(s.total).toLocaleString('tr-TR')} TL</td>
+            </tr>
+        `).join('');
+
+        const mailOptions = {
+            from: '"RedGate System" <noreply@redgate.com>',
+            to: adminEmail,
+            subject: `Yeni Toplu Sipariş: ${customerName}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                    <h2 style="color: #3b82f6;">Yeni Sipariş (Sepet)! 🛒</h2>
+                    <p><strong>${customerName}</strong> tarafından ${sales.length} kalem ürün sipariş edildi.</p>
+                    
+                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                        <thead>
+                            <tr style="background: #f9fafb; text-align: left;">
+                                <th style="padding: 8px;">Ürün</th>
+                                <th style="padding: 8px;">Adet</th>
+                                <th style="padding: 8px;">Tutar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHtml}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2" style="padding: 8px; font-weight: bold; text-align: right;">Toplam:</td>
+                                <td style="padding: 8px; font-weight: bold;">${totalAmount.toLocaleString('tr-TR')} TL</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/admin/orders" style="background: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Siparişleri Yönet</a>
+                </div>
+            `,
+        };
+
+        await transporter.sendMail(mailOptions);
+    } catch (error) {
+        console.error("Batch email error:", error);
+    }
+}
