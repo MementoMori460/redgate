@@ -9,8 +9,16 @@ export const metadata: Metadata = {
   title: "SalesTrack 2026 by Memento",
   description: "Advanced Sales Tracking Application",
   icons: {
-    icon: '/logo.png',
+    icon: '/redgateicon.png',
   },
+  manifest: "/manifest.json",
+};
+
+export const viewport = {
+  themeColor: "#000000",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 import { auth } from "../auth";

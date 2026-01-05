@@ -25,7 +25,7 @@ export async function checkLateShipments() {
         cutoffDate.setDate(cutoffDate.getDate() - days);
         cutoffDate.setHours(23, 59, 59, 999); // Include the entire cutoff day
 
-        console.log(`Checking Late Shipments: Days=${days}, Cutoff=${cutoffDate.toISOString()}`);
+
 
         const lateSales = await prisma.sale.count({
             where: {

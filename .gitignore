@@ -42,4 +42,8 @@ next-env.d.ts
 
 /app/generated/prisma
 
-reports-cache.json
+
+# PWA
+public/sw.js
+public/workbox-*.js
+public/worker-*.js
