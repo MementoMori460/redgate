@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getSales, updateSale } from '../../actions/sales';
+import { getPendingOrders, updateSale } from '../../actions/sales';
 import { CheckCircle, XCircle, Clock, Package } from 'lucide-react';
 import { SalesTable } from '../../components/SalesTable';
 
@@ -15,17 +15,7 @@ export default function AdminOrdersPage() {
 
     const loadOrders = async () => {
         setIsLoading(true);
-        const allSales = await getSales();
-        // Filter for PENDING status - Note: getSales returns everything for Admin
-        // But we need to check the status field.
-        // Wait, getSales DTO might not included status in the map function earlier?
-        // I need to check app/actions/sales.ts update again if I included status mapping.
-        // I added 'status' to SaleDTO type, but did I add it to the return map?
-        // Checking sales.ts... I likely missed mapping it in the return.
-        // I will assume it's mapped or the UI will fail. I should fix sales.ts map if needed.
-
-        // Assuming it's mapped:
-        const pending = allSales.filter((s: any) => s.status === 'PENDING');
+        const pending = await getPendingOrders();
         setPendingOrders(pending);
         setIsLoading(false);
     };

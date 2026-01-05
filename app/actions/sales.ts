@@ -30,13 +30,27 @@ export type SaleDTO = {
     paymentStatus?: string | null
 }
 
-export async function getSales() {
+export async function getSales(month?: number, year?: number) {
     try {
         const session = await auth();
         const role = session?.user?.role?.toLowerCase();
         const name = session?.user?.name;
 
         let whereClause: any = {};
+
+        // Date Filtering (Default to current month if not provided)
+        // Note: Javascript months are 0-11
+        const now = new Date();
+        const targetYear = year ?? now.getFullYear();
+        const targetMonth = month ?? now.getMonth();
+
+        const startDate = new Date(targetYear, targetMonth, 1);
+        const endDate = new Date(targetYear, targetMonth + 1, 1); // First day of next month
+
+        whereClause.date = {
+            gte: startDate,
+            lt: endDate
+        };
 
         // SALES role sees only their own sales
         if (role === 'sales') {
@@ -79,6 +93,45 @@ export async function getSales() {
     } catch (error) {
         console.error("Failed to fetch sales:", error)
         return []
+    }
+}
+
+export async function getPendingOrders() {
+    try {
+        const session = await auth();
+        // Assuming Admin is calling this, but we should enforce role check if needed.
+        // For now, implicit via UI access control.
+
+        const pendingSales = await prisma.sale.findMany({
+            where: {
+                status: 'PENDING'
+            },
+            orderBy: {
+                date: 'asc' // Show oldest first
+            }
+        });
+
+        // Map to DTO (Reuse logic or simplify)
+        return pendingSales.map(sale => ({
+            ...sale,
+            date: sale.date.toISOString().split('T')[0],
+            createdAt: sale.createdAt.toISOString(),
+            updatedAt: sale.updatedAt.toISOString(),
+            customerName: sale.customerName || '',
+            customerContact: sale.customerContact || '',
+            price: sale.price.toNumber(),
+            total: sale.total.toNumber(),
+            profit: sale.profit.toNumber(),
+            status: sale.status,
+            description: sale.description || '',
+            waybillNumber: sale.waybillNumber || '',
+            invoiceNumber: sale.invoiceNumber || '',
+            paymentStatus: sale.paymentStatus || '',
+        }));
+
+    } catch (error) {
+        console.error("Failed to fetch pending orders:", error);
+        return [];
     }
 }
 

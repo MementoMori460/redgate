@@ -1,7 +1,7 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useState, useEffect, useTransition } from 'react';
 import { SaleDTO, deleteSale, shipSale, markSaleAsPaid } from '../actions/sales';
 import { EditSaleModal } from '../components/EditSaleModal';
 import { AddSaleForm } from '../components/AddSaleForm'; // Imported AddSaleForm
@@ -11,15 +11,33 @@ import { clsx } from "clsx";
 
 interface SalesHistoryClientProps {
     initialSales: SaleDTO[];
+    initialDate: {
+        month: number;
+        year: number;
+    }
 }
 
-export function SalesHistoryClient({ initialSales }: SalesHistoryClientProps) {
+export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryClientProps) {
     const { role, currentUser } = useRole();
+    const router = useRouter();
+    const pathname = usePathname();
     const searchParams = useSearchParams();
+    const [isPending, startTransition] = useTransition();
+
     const [sales, setSales] = useState(initialSales);
     const [isAddSaleOpen, setIsAddSaleOpen] = useState(false);
     const [search, setSearch] = useState('');
-    const [currentDate, setCurrentDate] = useState(new Date());
+
+    // Construct Date object from props for UI display
+    // Note: initialDate.month is 0-11
+    const [currentDate, setCurrentDate] = useState(new Date(initialDate.year, initialDate.month, 1));
+
+    // Sync state when props change (e.g. after navigation)
+    useEffect(() => {
+        setSales(initialSales);
+        setCurrentDate(new Date(initialDate.year, initialDate.month, 1));
+    }, [initialSales, initialDate]);
+
     const [regionFilter, setRegionFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
@@ -79,36 +97,38 @@ export function SalesHistoryClient({ initialSales }: SalesHistoryClientProps) {
         setEditModalOpen(true);
     };
 
-    const handlePrevMonth = () => {
-        setCurrentDate(prev => {
-            const newDate = new Date(prev);
-            newDate.setMonth(prev.getMonth() - 1);
-            return newDate;
+    const updateMonth = (newDate: Date) => {
+        const params = new URLSearchParams(searchParams);
+        params.set('month', newDate.getMonth().toString());
+        params.set('year', newDate.getFullYear().toString());
+
+        startTransition(() => {
+            router.push(`${pathname}?${params.toString()}`);
         });
+    };
+
+    const handlePrevMonth = () => {
+        const newDate = new Date(currentDate);
+        newDate.setMonth(currentDate.getMonth() - 1);
+        updateMonth(newDate);
     };
 
     const handleNextMonth = () => {
-        setCurrentDate(prev => {
-            const newDate = new Date(prev);
-            newDate.setMonth(prev.getMonth() + 1);
-            return newDate;
-        });
+        const newDate = new Date(currentDate);
+        newDate.setMonth(currentDate.getMonth() + 1);
+        updateMonth(newDate);
     };
 
     const handlePrevYear = () => {
-        setCurrentDate(prev => {
-            const newDate = new Date(prev);
-            newDate.setFullYear(prev.getFullYear() - 1);
-            return newDate;
-        });
+        const newDate = new Date(currentDate);
+        newDate.setFullYear(currentDate.getFullYear() - 1);
+        updateMonth(newDate);
     };
 
     const handleNextYear = () => {
-        setCurrentDate(prev => {
-            const newDate = new Date(prev);
-            newDate.setFullYear(prev.getFullYear() + 1);
-            return newDate;
-        });
+        const newDate = new Date(currentDate);
+        newDate.setFullYear(currentDate.getFullYear() + 1);
+        updateMonth(newDate);
     };
 
     const monthName = currentDate.toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
@@ -163,13 +183,18 @@ export function SalesHistoryClient({ initialSales }: SalesHistoryClientProps) {
             ignoreDateFilter = true;
         }
 
-        const matchesMonth =
-            saleDate.getMonth() === currentDate.getMonth() &&
-            saleDate.getFullYear() === currentDate.getFullYear();
+        // Remove client-side matchesMonth check because server now filters data
+        // Only enforce month logic if we aren't in a special "ignoreDateFilter" mode
+        // But even then, the server only returned THIS month's data. 
+        // If user wants "All Late Orders", we might need a Global Search/Filter mode later.
+        // For now, let's assume valid data is passed for the current view.
+        // If statusFilter is active, we might miss data if server didn't return it. 
+        // NOTE: This is a trade-off. "Late orders" across all time now requires a specific server query.
+        // For now, allow filtering what we have.
 
         const matchesRegion = !regionFilter || sale.region === regionFilter;
 
-        return matchesSearch && matchesRegion && matchesStatus && (ignoreDateFilter || matchesMonth);
+        return matchesSearch && matchesRegion && matchesStatus;
     });
 
     const uniqueRegions = Array.from(new Set(initialSales.map(s => s.region)));
