@@ -167,7 +167,7 @@ function ProductModal({ product, onClose, onSuccess }: { product: ProductDTO | n
         if (result.success) {
             onSuccess();
         } else {
-            alert('İşlem başarısız.');
+            alert(result.error || 'İşlem başarısız.');
         }
         setIsSubmitting(false);
     };

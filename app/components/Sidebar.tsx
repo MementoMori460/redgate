@@ -58,10 +58,16 @@ export function Sidebar() {
         });
       }
     };
+
+    // Initial check
     check();
+
+    // Poll every 60 seconds
     const interval = setInterval(check, 60000);
+
     return () => clearInterval(interval);
-  }, [role, pathname]);
+    // Removed pathname from dependencies to prevent re-fetching on navigation
+  }, [role]);
 
   return (
     <aside

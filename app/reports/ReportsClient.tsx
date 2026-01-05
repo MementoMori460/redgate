@@ -225,49 +225,6 @@ export function ReportsClient({ data }: ReportsClientProps) {
                     </div>
                 </div>
 
-                {/* Monthly Comparison Table - Span 12 */}
-                <div className="md:col-span-12 bg-card border border-border/50 rounded-xl shadow-sm overflow-hidden">
-                    <div className="p-4 border-b border-border/50">
-                        <h3 className="text-sm font-semibold">Aylık Karşılaştırma Raporu ({tableData.length > 0 ? `${tableData[tableData.length - 1].name} - ${tableData[0].name}` : 'Tüm Zamanlar'})</h3>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead className="bg-secondary/30 text-xs uppercase text-muted-foreground font-medium">
-                                <tr>
-                                    <th className="px-4 py-3 text-left">Dönem</th>
-                                    <th className="px-4 py-3 text-right">Ciro</th>
-                                    <th className="px-4 py-3 text-right">Değişim</th>
-                                    {showProfit && <th className="px-4 py-3 text-right">Kar</th>}
-                                    {showProfit && <th className="px-4 py-3 text-right">Kar Değişimi</th>}
-                                    <th className="px-4 py-3 text-right">Sipariş</th>
-                                    <th className="px-4 py-3 text-right">Müşteri</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border/50">
-                                {tableData.map((row) => (
-                                    <tr key={row.name} className="hover:bg-secondary/20 transition-colors">
-                                        <td className="px-4 py-2 font-medium">{row.name}</td>
-                                        <td className="px-4 py-2 text-right">{row.revenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺</td>
-                                        <td className="px-4 py-2 text-right">
-                                            <TrendBadge value={row.revenueGrowth} />
-                                        </td>
-                                        {showProfit && (
-                                            <>
-                                                <td className="px-4 py-2 text-right text-green-600 font-medium">{row.profit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺</td>
-                                                <td className="px-4 py-2 text-right">
-                                                    <TrendBadge value={row.profitGrowth} />
-                                                </td>
-                                            </>
-                                        )}
-                                        <td className="px-4 py-2 text-right">{row.salesCount}</td>
-                                        <td className="px-4 py-2 text-right">{row.customerCount}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
                 {/* Top Products - Span 6 */}
                 <div className="md:col-span-6 bg-card border border-border/50 rounded-xl shadow-sm h-[400px] flex flex-col">
                     <div className="p-4 border-b border-border/50 flex justify-between items-center">
@@ -344,6 +301,48 @@ export function ReportsClient({ data }: ReportsClientProps) {
                     </div>
                 </div>
 
+                {/* Monthly Comparison Table - Span 12 */}
+                <div className="md:col-span-12 bg-card border border-border/50 rounded-xl shadow-sm overflow-hidden">
+                    <div className="p-4 border-b border-border/50">
+                        <h3 className="text-sm font-semibold">Aylık Karşılaştırma Raporu ({tableData.length > 0 ? `${tableData[tableData.length - 1].name} - ${tableData[0].name}` : 'Tüm Zamanlar'})</h3>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead className="bg-secondary/30 text-xs uppercase text-muted-foreground font-medium">
+                                <tr>
+                                    <th className="px-4 py-3 text-left">Dönem</th>
+                                    <th className="px-4 py-3 text-right">Ciro</th>
+                                    <th className="px-4 py-3 text-right">Değişim</th>
+                                    {showProfit && <th className="px-4 py-3 text-right">Kar</th>}
+                                    {showProfit && <th className="px-4 py-3 text-right">Kar Değişimi</th>}
+                                    <th className="px-4 py-3 text-right">Sipariş</th>
+                                    <th className="px-4 py-3 text-right">Müşteri</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border/50">
+                                {tableData.map((row) => (
+                                    <tr key={row.name} className="hover:bg-secondary/20 transition-colors">
+                                        <td className="px-4 py-2 font-medium">{row.name}</td>
+                                        <td className="px-4 py-2 text-right">{row.revenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺</td>
+                                        <td className="px-4 py-2 text-right">
+                                            <TrendBadge value={row.revenueGrowth} />
+                                        </td>
+                                        {showProfit && (
+                                            <>
+                                                <td className="px-4 py-2 text-right text-green-600 font-medium">{row.profit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺</td>
+                                                <td className="px-4 py-2 text-right">
+                                                    <TrendBadge value={row.profitGrowth} />
+                                                </td>
+                                            </>
+                                        )}
+                                        <td className="px-4 py-2 text-right">{row.salesCount}</td>
+                                        <td className="px-4 py-2 text-right">{row.customerCount}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     );

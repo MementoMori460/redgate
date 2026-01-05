@@ -2,147 +2,226 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import fs from 'fs/promises';
+import path from 'path';
+import { revalidatePath } from "next/cache";
 
-export async function getReportData() {
-    const session = await auth();
-    if (!session) throw new Error("Unauthorized");
+const CACHE_FILE = path.join(process.cwd(), 'reports-cache.json');
 
-    // Fetch all sales
-    const sales = await prisma.sale.findMany({
-        orderBy: { date: 'asc' }
-    });
+async function getCachedData() {
+    try {
+        const data = await fs.readFile(CACHE_FILE, 'utf-8');
+        return JSON.parse(data);
+    } catch (error) {
+        // Cache file might not exist or be corrupted, return null to indicate no cache
+        return null;
+    }
+}
 
-    // 1. Monthly Comparison Logic
-    const monthlyStats = new Map<string, {
-        date: Date,
-        name: string,
-        revenue: number,
-        profit: number,
-        salesCount: number,
-        customers: Set<string>
-    }>();
+async function saveCache(data: any) {
+    try {
+        await fs.writeFile(CACHE_FILE, JSON.stringify(data), 'utf-8');
+    } catch (error) {
+        console.error("Failed to save cache:", error);
+    }
+}
 
-    sales.forEach(sale => {
-        const date = new Date(sale.date);
-        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        // Full month name for display
-        const monthName = date.toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
+export async function refreshReportCache() {
+    try {
+        const data = await fetchFromDatabase();
+        await saveCache(data);
+        revalidatePath('/reports'); // Invalidate the cache for the /reports page
+        return { success: true };
+    } catch (error) {
+        console.error("Refresh cache failed:", error);
+        return { success: false, error: "Veriler güncellenirken hata oluştu." };
+    }
+}
 
-        if (!monthlyStats.has(key)) {
-            monthlyStats.set(key, {
-                date: new Date(date.getFullYear(), date.getMonth(), 1), // First day of month for sorting
-                name: monthName,
-                revenue: 0,
-                profit: 0,
-                salesCount: 0,
-                customers: new Set()
-            });
-        }
+async function fetchFromDatabase() {
+    // Parallelize Independent Queries for faster execution
+    const [
+        monthlyStatsRaw,
+        targets,
+        storeStats, // Renamed from storePerformance to match original structure
+        productStats, // Renamed from topProducts
+        regionStats, // Renamed from regionData
+        salesPersonStats, // Renamed from salesPersonPerformance
+        financials, // This query was removed in the instruction's fetchFromDatabase, but kept here to maintain original processing logic.
+        rawSales
+    ] = await Promise.all([
+        // 1. Monthly Stats (Using QueryRaw for Date Truncation/Formatting + Distinct Count)
+        prisma.$queryRaw<any[]>`
+            SELECT 
+                TO_CHAR(date, 'YYYY-MM') as key,
+                DATE_TRUNC('month', date) as date,
+                SUM(total) as revenue,
+                SUM(profit) as profit,
+                COUNT(id) as "salesCount",
+                COUNT(DISTINCT "customerName") as "customerCount"
+            FROM "Sale"
+            GROUP BY TO_CHAR(date, 'YYYY-MM'), DATE_TRUNC('month', date)
+            ORDER BY date ASC
+        `,
 
-        const stat = monthlyStats.get(key)!;
-        stat.revenue += sale.total.toNumber();
-        stat.profit += sale.profit.toNumber();
-        stat.salesCount += 1;
-        if (sale.customerName) stat.customers.add(sale.customerName);
-    });
+        // 2. Fetch Targets
+        prisma.monthlyTarget.findMany(),
 
-    // Convert Map to Array and Sort by Date
-    const sortedMonths = Array.from(monthlyStats.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
+        // 3. Store Performance
+        prisma.sale.groupBy({
+            by: ['storeCode', 'storeName', 'city', 'region'],
+            _sum: {
+                total: true,
+                profit: true
+            },
+            _count: {
+                id: true
+            },
+            orderBy: {
+                _sum: {
+                    total: 'desc'
+                }
+            }
+        }),
 
-    // Fetch Monthly Targets
-    const targets = await prisma.monthlyTarget.findMany();
+        // 4. Top Products (Limit 10)
+        prisma.sale.groupBy({
+            by: ['item'],
+            _sum: {
+                quantity: true,
+                total: true
+            },
+            orderBy: {
+                _sum: {
+                    total: 'desc'
+                }
+            },
+            take: 10
+        }),
+
+        // 5. Region Stats
+        prisma.sale.groupBy({
+            by: ['region'],
+            _sum: {
+                total: true
+            },
+            orderBy: {
+                _sum: {
+                    total: 'desc'
+                }
+            }
+        }),
+
+        // 6. Sales Person Stats
+        prisma.sale.groupBy({
+            by: ['salesPerson'],
+            _sum: {
+                total: true
+            },
+            orderBy: {
+                _sum: {
+                    total: 'desc'
+                }
+            },
+            take: 5
+        }),
+
+        // 7. Overall Financials
+        prisma.sale.aggregate({
+            _sum: {
+                total: true,
+                profit: true
+            },
+            _count: {
+                id: true
+            }
+        }),
+
+        // 8. Fetch Sales for Client Interaction (Optimized Select)
+        prisma.sale.findMany({
+            orderBy: { date: 'asc' },
+            select: {
+                id: true,
+                date: true,
+                item: true,
+                quantity: true,
+                total: true,
+                profit: true, // Needed for store perf calc on client
+                storeCode: true,
+                storeName: true,
+                region: true,
+                city: true,
+                salesPerson: true,
+                customerName: true
+                // Excluded: description, waybillNumber, invoices, etc.
+            }
+        })
+    ]);
+
+    // Process Monthly Data
     const targetMap = new Map<string, number>();
     targets.forEach(t => {
-        // targets are stored with day=1, but let's key by YYYY-MM
         const key = `${t.year}-${String(t.month).padStart(2, '0')}`;
         targetMap.set(key, t.target.toNumber());
     });
 
-    // Calculate MoM Growth
-    const monthlyComparison = sortedMonths.map((curr, index) => {
-        const prev = sortedMonths[index - 1];
-        const prevRevenue = prev ? prev.revenue : 0;
-        const prevProfit = prev ? prev.profit : 0;
-        const dateKey = `${curr.date.getFullYear()}-${String(curr.date.getMonth() + 1).padStart(2, '0')}`;
+    const monthlyComparison = monthlyStatsRaw.map((curr: any, index: number) => {
+        const prev = monthlyStatsRaw[index - 1];
+        const prevRevenue = prev ? Number(prev.revenue) : 0;
+        const prevProfit = prev ? Number(prev.profit) : 0;
+
+        const revenue = Number(curr.revenue);
+        const profit = Number(curr.profit);
+
+        // Month name from date object
+        const dateObj = new Date(curr.date);
+        const name = dateObj.toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
 
         return {
-            name: curr.name,
-            revenue: curr.revenue,
-            profit: curr.profit,
-            target: targetMap.get(dateKey) || 0, // Add Target
-            salesCount: curr.salesCount,
-            customerCount: curr.customers.size,
-            revenueGrowth: prevRevenue > 0 ? ((curr.revenue - prevRevenue) / prevRevenue) * 100 : 0,
-            profitGrowth: prevProfit > 0 ? ((curr.profit - prevProfit) / prevProfit) * 100 : 0,
+            name,
+            revenue,
+            profit,
+            target: targetMap.get(curr.key) || 0,
+            salesCount: Number(curr.salesCount),
+            customerCount: Number(curr.customerCount),
+            revenueGrowth: prevRevenue > 0 ? ((revenue - prevRevenue) / prevRevenue) * 100 : 0,
+            profitGrowth: prevProfit > 0 ? ((profit - prevProfit) / prevProfit) * 100 : 0,
             prevRevenue,
             prevProfit
         };
     });
 
-    // 2. Store Performance
-    const storeStats = new Map<string, { name: string, region: string, city: string, revenue: number, profit: number, count: number }>();
-    sales.forEach(sale => {
-        const key = sale.storeCode || sale.storeName; // Use code if available, fallback to name
-        if (!storeStats.has(key)) {
-            storeStats.set(key, { name: sale.storeName, region: sale.region, city: sale.city, revenue: 0, profit: 0, count: 0 });
-        }
-        const stat = storeStats.get(key)!;
-        stat.revenue += sale.total.toNumber();
-        stat.profit += sale.profit.toNumber();
-        stat.count += 1;
-    });
+    // Process Store Data
+    const storePerformance = storeStats.map(stat => ({
+        name: stat.storeName,
+        region: stat.region,
+        city: stat.city,
+        revenue: Number(stat._sum.total),
+        profit: Number(stat._sum.profit),
+        count: stat._count.id
+    }));
 
-    const storePerformance = Array.from(storeStats.values())
-        .sort((a, b) => b.revenue - a.revenue);
+    // Process Product Data
+    const topProducts = productStats.map(stat => ({
+        name: stat.item,
+        quantity: stat._sum.quantity || 0,
+        revenue: Number(stat._sum.total)
+    }));
 
-    // 3. Category/Product Performance (Top 10)
-    const productStats = new Map<string, { name: string, quantity: number, revenue: number }>();
-    sales.forEach(sale => {
-        const product = sale.item;
-        if (!productStats.has(product)) {
-            productStats.set(product, { name: product, quantity: 0, revenue: 0 });
-        }
-        const stat = productStats.get(product)!;
-        stat.quantity += sale.quantity;
-        stat.revenue += sale.total.toNumber();
-    });
+    // Process Region Data
+    const regionData = regionStats.map(stat => ({
+        name: stat.region,
+        value: Number(stat._sum.total)
+    }));
 
-    const topProducts = Array.from(productStats.values())
-        .sort((a, b) => b.revenue - a.revenue) // Sort by revenue for impact
-        .slice(0, 10);
-
-    // 4. Region Stats (Pie Chart Data)
-    const regionStats = new Map<string, number>();
-    sales.forEach(sale => {
-        regionStats.set(sale.region, (regionStats.get(sale.region) || 0) + sale.total.toNumber());
-    });
-    const regionData = Array.from(regionStats.entries()).map(([name, value]) => ({ name, value }));
-
-    // 5. Sales Person Performance
-    const salesPersonStats = new Map<string, number>();
-    sales.forEach(sale => {
-        salesPersonStats.set(sale.salesPerson, (salesPersonStats.get(sale.salesPerson) || 0) + sale.total.toNumber());
-    });
-    const topSalesPeople = Array.from(salesPersonStats.entries())
-        .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 5);
-
-
-    // 6. Calculate Financials (Total Revenue, Profit, Count)
-    const financials = await prisma.sale.aggregate({
-        _sum: {
-            total: true,
-            profit: true
-        },
-        _count: {
-            id: true
-        }
-    });
+    // Process Sales Person Data
+    const topSalesPeople = salesPersonStats.map(stat => ({
+        name: stat.salesPerson,
+        value: Number(stat._sum.total)
+    }));
 
     const safeNumber = (val: any) => val ? Number(val) : 0;
 
-    // Return data
     return {
         financials: {
             totalRevenue: safeNumber(financials._sum.total),
@@ -156,11 +235,24 @@ export async function getReportData() {
         regionData,
         topSalesPeople,
         storePerformance,
-        sales: sales.map(s => ({
+        sales: rawSales.map(s => ({
             ...s,
-            price: Number(s.price),
+            // Ensure numbers for client (Decimal -> Number)
             total: Number(s.total),
             profit: Number(s.profit),
         }))
     };
+}
+
+export async function getReportData() {
+    // 1. Try Cache
+    const cached = await getCachedData();
+    if (cached) {
+        return cached;
+    }
+
+    // 2. Fallback to DB if no cache (first run)
+    const data = await fetchFromDatabase();
+    await saveCache(data);
+    return data;
 }

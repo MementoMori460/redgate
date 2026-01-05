@@ -86,9 +86,18 @@ export async function updateProduct(id: string, data: Partial<ProductDTO>) {
         })
         revalidatePath('/admin/products')
         return { success: true, data: product }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Failed to update product:", error)
-        return { success: false, error: "Failed to update product" }
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+            const target = (error.meta?.target as string[]) || [];
+            if (target.includes('name')) {
+                return { success: false, error: "Bu isimde bir ürün zaten mevcut." }
+            }
+            if (target.includes('productNumber')) {
+                return { success: false, error: "Bu ürün koduna sahip bir ürün zaten mevcut." }
+            }
+        }
+        return { success: false, error: "Ürün güncellenirken bir hata oluştu." }
     }
 }
 

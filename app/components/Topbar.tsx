@@ -42,10 +42,39 @@ export function Topbar() {
                     <p className="text-xs text-muted-foreground capitalize">{role === 'sales' ? 'Plasiyer' : role}</p>
                 </div>
 
+                {pathname.includes('/reports') && (
+                    <UpdateDataButton />
+                )}
+
                 <div className="w-px h-8 bg-border/50 hidden md:block" />
 
                 <NotificationCenter />
             </div>
-        </header>
+        </header >
+    );
+}
+
+import { refreshReportCache } from '@/app/actions/reports';
+import { useTransition } from 'react';
+import { RotateCcw } from 'lucide-react';
+
+function UpdateDataButton() {
+    const [isPending, startTransition] = useTransition();
+
+    const handleUpdate = () => {
+        startTransition(async () => {
+            await refreshReportCache();
+        });
+    };
+
+    return (
+        <button
+            onClick={handleUpdate}
+            disabled={isPending}
+            className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-xs font-medium transition-colors"
+        >
+            <RotateCcw size={14} className={isPending ? "animate-spin" : ""} />
+            {isPending ? 'Güncelleniyor...' : 'Verileri Güncelle'}
+        </button>
     );
 }
