@@ -271,69 +271,7 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
                 </div>
             </div>
 
-            {/* Monthly Target & Summary - Compact Version */}
-            {role !== 'customer' && !statusFilter && (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                    {/* Target Card - Compact Height */}
-                    <div className="bg-card border border-border/50 rounded-lg p-2 shadow-none md:col-span-3 relative overflow-hidden flex items-center justify-between h-[50px]">
-                        <div className="absolute -bottom-2 right-10 opacity-5 pointer-events-none">
-                            <TrendingUp size={60} />
-                        </div>
 
-                        {/* Target Info - Horizontal Layout */}
-                        <div className="relative z-10 flex items-center gap-4">
-                            <div>
-                                <h3 className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider leading-none">Aylık Hedef</h3>
-                                <div className="flex items-baseline gap-1.5 mt-0.5">
-                                    <span className="text-sm font-bold leading-none text-foreground">{totalRevenue.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺</span>
-                                    <span className="text-[10px] text-muted-foreground leading-none">/ {monthlyTarget.target.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺</span>
-                                </div>
-                            </div>
-
-                            {/* Status Text / Remaining - Inline */}
-                            <div className="hidden sm:flex flex-col items-start gap-0.5 border-l border-border/50 pl-3">
-                                <span className="text-[10px] font-medium text-muted-foreground leading-none">
-                                    {remaining > 0 ? `${remaining.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺ kaldı` : 'Hedef aşıldı!'}
-                                </span>
-                                {monthlyTarget.success && (
-                                    <span className="text-[9px] text-muted-foreground/70 leading-none">
-                                        Excel: {monthlyTarget.success.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Visualize Progress - Very Compact */}
-                        <div className="relative z-10 flex items-center gap-2 pr-1">
-                            <div className="flex flex-col items-end">
-                                <span className={clsx("text-sm font-bold leading-none", progress >= 100 ? "text-green-500" : "text-primary")}>
-                                    %{progress.toFixed(1)}
-                                </span>
-                            </div>
-                            <div className="h-1.5 w-16 bg-secondary/50 rounded-full overflow-hidden">
-                                <div
-                                    className={clsx("h-full transition-all duration-500", progress >= 100 ? "bg-green-500" : "bg-primary")}
-                                    style={{ width: `${Math.min(progress, 100)}%` }}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Mini Stats - Horizontal layout to match height */}
-                    <div className="grid grid-cols-2 gap-2 md:col-span-1">
-                        <div className="bg-card border border-border/50 rounded-lg px-2 flex flex-col justify-center h-[50px] shadow-none">
-                            <p className="text-[9px] text-muted-foreground font-medium leading-none mb-0.5">Adet</p>
-                            <h3 className="text-xs font-bold leading-none">{filteredSales.length}</h3>
-                        </div>
-                        {showProfit && (
-                            <div className="bg-card border border-border/50 rounded-lg px-2 flex flex-col justify-center h-[50px] shadow-none">
-                                <p className="text-[9px] text-muted-foreground font-medium leading-none mb-0.5">Kar</p>
-                                <h3 className="text-xs font-bold text-green-600 leading-none">{totalProfit.toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺</h3>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
 
             {/* Old Status Filter Indicator */}
             {statusFilter && (
