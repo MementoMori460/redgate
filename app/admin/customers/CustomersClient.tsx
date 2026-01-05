@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { createCustomer, deleteCustomer, updateCustomer, CustomerDTO } from '../../actions/customers';
-import { importChecklistData } from '../../actions/import-legacy';
+import { createCustomer, deleteCustomer, updateCustomer, CustomerDTO, importCustomersFromExcel } from '../../actions/customers';
 import { Plus, Upload, Search, MoreHorizontal, Building2, MapPin, Trash2, Edit } from 'lucide-react';
 import { ConfirmationModal } from '@/app/components/ConfirmationModal';
 
@@ -54,7 +53,7 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
             const formData = new FormData();
             formData.append('file', file);
 
-            const result = await importChecklistData(formData);
+            const result = await importCustomersFromExcel(formData);
             if (result.success) {
                 alert(result.message);
                 window.location.reload();
@@ -77,11 +76,27 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
         (c.city || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'city' | 'storeCode', direction: 'asc' | 'desc' }>({ key: 'name', direction: 'asc' });
+
+    const handleSort = (key: 'name' | 'city' | 'storeCode') => {
+        setSortConfig(current => ({
+            key,
+            direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
+    const sortedCustomers = [...filteredCustomers].sort((a, b) => {
+        const aValue = (a[sortConfig.key] || '').toString().toLowerCase();
+        const bValue = (b[sortConfig.key] || '').toString().toLowerCase();
+
+        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-
-
                 <div className="hidden lg:block bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-lg">
                     <p className="text-xs text-blue-600">
                         <span className="font-bold">Not:</span> Müşterilerin sisteme giriş şifreleri <a href="/admin/users" className="underline hover:text-blue-800">Kullanıcılar</a> sayfasından yönetilir.
@@ -117,8 +132,8 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
             </div>
 
             <div className="bg-card border border-border rounded-xl overflow-hidden">
-                <div className="p-4 border-b border-border">
-                    <div className="relative max-w-sm">
+                <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-4 justify-between items-center">
+                    <div className="relative w-full sm:w-72">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                         <input
                             type="text"
@@ -128,53 +143,78 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
                             className="w-full bg-secondary/50 border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/50 outline-none"
                         />
                     </div>
+
+                    <div className="flex items-center gap-2 text-sm w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
+                        <span className="text-muted-foreground whitespace-nowrap">Sırala:</span>
+                        <button
+                            onClick={() => handleSort('name')}
+                            className={`px-3 py-1.5 rounded-md transition-colors whitespace-nowrap ${sortConfig.key === 'name' ? 'bg-primary/10 text-primary font-medium' : 'bg-secondary/30 hover:bg-secondary/50'}`}
+                        >
+                            İsim {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                        </button>
+                        <button
+                            onClick={() => handleSort('city')}
+                            className={`px-3 py-1.5 rounded-md transition-colors whitespace-nowrap ${sortConfig.key === 'city' ? 'bg-primary/10 text-primary font-medium' : 'bg-secondary/30 hover:bg-secondary/50'}`}
+                        >
+                            Şehir {sortConfig.key === 'city' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                        </button>
+                        <button
+                            onClick={() => handleSort('storeCode')}
+                            className={`px-3 py-1.5 rounded-md transition-colors whitespace-nowrap ${sortConfig.key === 'storeCode' ? 'bg-primary/10 text-primary font-medium' : 'bg-secondary/30 hover:bg-secondary/50'}`}
+                        >
+                            Mağaza {sortConfig.key === 'storeCode' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                        </button>
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
                     <table className="w-full text-xs text-left compact-table">
                         <thead className="text-[10px] uppercase bg-secondary/30 text-muted-foreground font-semibold">
                             <tr>
-                                <th className="px-3 py-2">Müşteri Adı</th>
-                                <th className="px-3 py-2">Şehir</th>
-                                <th className="px-3 py-2">İletişim</th>
-                                <th className="px-3 py-2">Mağaza Kodu</th>
-                                <th className="px-3 py-2 text-center">İşlem</th>
+                                <th className="px-2 py-1.5">Müşteri Adı</th>
+                                <th className="px-2 py-1.5">Şehir</th>
+                                <th className="px-2 py-1.5">İletişim / Unvan</th>
+                                <th className="px-2 py-1.5">Telefon</th>
+                                <th className="px-2 py-1.5">E-posta</th>
+                                <th className="px-2 py-1.5">Mağaza Kodu</th>
+                                <th className="px-2 py-1.5 text-center">İşlem</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                            {filteredCustomers.length === 0 ? (
+                            {sortedCustomers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                                    <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                                         Kayıtlı müşteri bulunamadı.
                                     </td>
                                 </tr>
                             ) : (
-                                filteredCustomers.map((customer) => (
-                                    <tr key={customer.id} className="hover:bg-secondary/10 transition-colors h-8">
-                                        <td className="px-3 py-1 font-medium">
+                                sortedCustomers.map((customer) => (
+                                    <tr key={customer.id} className="hover:bg-secondary/10 transition-colors h-7">
+                                        <td className="px-2 py-0.5 font-medium whitespace-nowrap">
                                             <div className="flex items-center gap-2">
-                                                <div className="bg-primary/10 p-1 rounded text-primary">
-                                                    <Building2 size={14} />
+                                                <div className="bg-primary/10 p-0.5 rounded text-primary">
+                                                    <Building2 size={12} />
                                                 </div>
                                                 {customer.name}
                                             </div>
                                         </td>
-                                        <td className="px-3 py-1 text-muted-foreground">
+                                        <td className="px-2 py-0.5 text-muted-foreground whitespace-nowrap">
                                             {customer.city && (
                                                 <div className="flex items-center gap-1">
-                                                    <MapPin size={12} />
+                                                    <MapPin size={10} />
                                                     {customer.city}
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="px-3 py-1 text-muted-foreground">
-                                            <div className="flex flex-col">
-                                                <span>{customer.contactName || '-'}</span>
-                                                <span className="text-[10px] opacity-70">{customer.phone}</span>
-                                            </div>
+                                        <td className="px-2 py-0.5 text-muted-foreground text-[10px] truncate max-w-[150px]" title={customer.contactName || ''}>
+                                            {customer.contactName || '-'}
                                         </td>
-                                        <td className="px-3 py-1 font-mono text-[10px]">{customer.storeCode || '-'}</td>
-                                        <td className="px-3 py-1 text-center">
+                                        <td className="px-2 py-0.5 text-[10px] whitespace-nowrap">{customer.phone || '-'}</td>
+                                        <td className="px-2 py-0.5 text-[10px] truncate max-w-[150px]" title={customer.email || ''}>
+                                            {customer.email || '-'}
+                                        </td>
+                                        <td className="px-2 py-0.5 font-mono text-[10px] whitespace-nowrap">{customer.storeCode || '-'}</td>
+                                        <td className="px-2 py-0.5 text-center">
                                             <div className="flex items-center justify-center gap-1">
                                                 <button
                                                     onClick={() => {
@@ -184,7 +224,7 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
                                                     className="p-1 bg-secondary/50 rounded hover:text-primary hover:bg-primary/10 transition-all"
                                                     title="Düzenle"
                                                 >
-                                                    <Edit size={14} />
+                                                    <Edit size={12} />
                                                 </button>
                                                 <button
                                                     onClick={() => {
@@ -195,7 +235,7 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
                                                     className="p-1 bg-secondary/50 rounded hover:text-red-500 hover:bg-red-500/10 transition-all"
                                                     title="Sil"
                                                 >
-                                                    <Trash2 size={14} />
+                                                    <Trash2 size={12} />
                                                 </button>
                                             </div>
                                         </td>
@@ -277,8 +317,8 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
                 isOpen={importConfirmOpen}
                 onClose={() => setImportConfirmOpen(false)}
                 onConfirm={handleImportConfirm}
-                title="Excel'den Aktar"
-                message="Excel dosyasından Müşteriler ve Satışlar senkronize edilecek. Bu işlem verilerini günceller. Devam edilsin mi?"
+                title="Müşteri Listesi İçe Aktar"
+                message="Excel dosyasından Müşteri ve Mağaza bilgileri güncellenecek. (Satış verileri etkilenmez). Devam edilsin mi?"
                 confirmText="Devam Et"
                 icon="question"
             />
@@ -291,7 +331,7 @@ import { X } from 'lucide-react';
 
 function CustomerForm({ customer, onClose }: { customer: CustomerDTO | null, onClose: () => void }) {
     const isEditing = !!customer;
-    const [storeCodes, setStoreCodes] = useState<string[]>([]);
+    const [storeCodes, setStoreCodes] = useState<{ code: string, name: string, city: string }[]>([]);
 
     React.useEffect(() => {
         import('../../actions/customers').then(({ getStoreCodes }) => {
@@ -319,7 +359,6 @@ function CustomerForm({ customer, onClose }: { customer: CustomerDTO | null, onC
             await createCustomer(data);
         }
 
-        // Simple reload to refresh data
         window.location.reload();
     };
 
@@ -357,18 +396,24 @@ function CustomerForm({ customer, onClose }: { customer: CustomerDTO | null, onC
                                 defaultValue={customer?.storeCode}
                                 list="storeCodesList"
                                 className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/50 outline-none"
-                                placeholder="Kod ara..."
+                                placeholder="Kod ara (Şehir, Ad)..."
                                 autoComplete="off"
                             />
                             <datalist id="storeCodesList">
-                                {storeCodes.map(code => (
-                                    <option key={code} value={code} />
+                                {storeCodes.map(store => (
+                                    <option key={store.code} value={store.code}>
+                                        {store.city} - {store.name}
+                                    </option>
                                 ))}
                             </datalist>
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium">E-posta</label>
                             <input name="email" type="email" defaultValue={customer?.email} className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/50 outline-none" />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">İletişim Ünvan / Açıklama</label>
+                            <input name="contactName" defaultValue={customer?.contactName} className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/50 outline-none" />
                         </div>
 
                         <div className="pt-4 flex justify-end gap-3">
@@ -381,7 +426,9 @@ function CustomerForm({ customer, onClose }: { customer: CustomerDTO | null, onC
                         </div>
                     </form>
                 </div>
-            </div >
-        </div >
+            </div>
+        </div>
     );
 }
+
+

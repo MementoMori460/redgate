@@ -184,8 +184,13 @@ export async function importChecklistData(formData?: FormData) {
                     const saleDate = safeParseDate(row[colMap.date]);
 
                     if (!saleDate || isNaN(saleDate.getTime())) {
-                        // console.warn(`Invalid Date in ${sheetName} Row ${i}: Val="${row[colMap.date]}"`);
                         continue; // Skip invalid date rows
+                    }
+
+                    // STRICT RESTRICTION: Only allow 2026 and later
+                    if (saleDate.getFullYear() < 2026) {
+                        // console.log(`Skipping old date: ${saleDate.getFullYear()}`);
+                        continue;
                     }
 
                     const rawCity = colMap.city !== undefined ? (row[colMap.city]?.toString() || 'Unknown') : 'Unknown';
