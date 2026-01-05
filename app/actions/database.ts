@@ -9,12 +9,13 @@ export async function exportDatabase() {
         throw new Error('Unauthorized');
     }
 
-    const [stores, customers, products, sales, targets] = await Promise.all([
+    const [stores, customers, products, sales, targets, suppliers] = await Promise.all([
         prisma.store.findMany(),
         prisma.customer.findMany(),
         prisma.product.findMany(),
         prisma.sale.findMany(),
         prisma.monthlyTarget.findMany(),
+        prisma.supplier.findMany(),
     ]);
 
     // Helper to serialize decimals
@@ -26,6 +27,11 @@ export async function exportDatabase() {
         data: {
             stores,
             customers,
+            suppliers: suppliers.map(s => ({
+                ...s,
+                createdAt: s.createdAt.toISOString(),
+                updatedAt: s.updatedAt.toISOString()
+            })),
             products: products.map(p => ({
                 ...p,
                 price: serializeOptionalDecimal(p.price),
@@ -65,7 +71,7 @@ export async function importDatabase(data: any) {
         throw new Error('Invalid backup file format');
     }
 
-    const { stores, customers, products, sales, monthlyTargets } = data.data;
+    const { stores, customers, products, sales, monthlyTargets, suppliers } = data.data;
 
     try {
         // Restore Stores
@@ -86,6 +92,17 @@ export async function importDatabase(data: any) {
                     where: { id: customer.id },
                     update: { ...customer },
                     create: { ...customer }
+                });
+            }
+        }
+
+        // Restore Suppliers (Must be before products)
+        if (suppliers?.length) {
+            for (const supplier of suppliers) {
+                await prisma.supplier.upsert({
+                    where: { id: supplier.id },
+                    update: { ...supplier },
+                    create: { ...supplier }
                 });
             }
         }
