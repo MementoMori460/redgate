@@ -1,6 +1,6 @@
 {
-    "name": "SalesTrack 2026",
-    "short_name": "SalesTrack",
+    "name": "RedGate SalesTrack 2026",
+    "short_name": "RedGate",
     "description": "Advanced Sales Tracking Application",
     "start_url": "/",
     "display": "standalone",
