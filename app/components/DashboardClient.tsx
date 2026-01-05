@@ -84,7 +84,7 @@ export function DashboardClient({ sales, user, targetRevenue, lateShipmentCount 
         <div className="space-y-4">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="space-y-1">
-                    {/* Header Removed as per request */}
+                    {/* Header */}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
@@ -110,6 +110,7 @@ export function DashboardClient({ sales, user, targetRevenue, lateShipmentCount 
             <SummaryCards
                 data={salesData}
                 targetRevenue={customTarget ?? targetRevenue}
+                lateShipmentCount={lateShipmentCount}
             />
 
             {/* Warehouse role sees only summary cards */}

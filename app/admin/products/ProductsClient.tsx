@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ProductDTO, createProduct, updateProduct, deleteProduct } from '@/app/actions/products';
 import { Plus, Search, Edit2, Trash2, X, Loader2, Save, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { ConfirmationModal } from '@/app/components/ConfirmationModal';
 
 interface ProductsClientProps {
     initialProducts: ProductDTO[];
@@ -17,6 +18,8 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+
     const filteredProducts = products.filter(p =>
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         (p.productNumber || '').toLowerCase().includes(search.toLowerCase())
@@ -24,14 +27,19 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
 
 
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Bu ürünü silmek istediğinize emin misiniz?')) return;
+    const handleDeleteClick = (id: string) => {
+        setDeleteModal({ isOpen: true, id });
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteModal.id) return;
 
         setIsLoading(true);
-        const result = await deleteProduct(id);
+        const result = await deleteProduct(deleteModal.id);
         if (result.success) {
             router.refresh();
-            setProducts(products.filter(p => p.id !== id));
+            setProducts(products.filter(p => p.id !== deleteModal.id));
+            setDeleteModal({ isOpen: false, id: null });
         } else {
             alert('Silme işlemi başarısız oldu.');
         }
@@ -94,7 +102,7 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                                 <Edit2 size={14} />
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(product.id || '')}
+                                                onClick={() => handleDeleteClick(product.id || '')}
                                                 className="p-1 hover:bg-secondary rounded-md text-red-500 transition-colors"
                                             >
                                                 <Trash2 size={14} />
@@ -129,6 +137,18 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                     }}
                 />
             )}
+
+            <ConfirmationModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, id: null })}
+                onConfirm={handleDeleteConfirm}
+                title="Ürünü Sil"
+                message="Bu ürünü silmek istediğinize emin misiniz? Bu işlem geri alınamaz."
+                confirmText="Sil"
+                isDangerous={true}
+                isLoading={isLoading}
+                icon="trash"
+            />
         </div>
     );
 }

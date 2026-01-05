@@ -16,7 +16,6 @@ interface SalesHistoryClientProps {
         year: number;
     }
 }
-
 export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryClientProps) {
     const { role, currentUser } = useRole();
     const router = useRouter();
@@ -60,6 +59,12 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
     // Edit Modal State
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [selectedSaleForEdit, setSelectedSaleForEdit] = useState<SaleDTO | null>(null);
+
+    // Delete Modal State
+    const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
+    const [saleToDelete, setSaleToDelete] = useState<SaleDTO | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
 
     const handleShipClick = (sale: SaleDTO) => {
         setSelectedSaleForShip(sale);
@@ -378,97 +383,130 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
                                     </>
                                 )}
                                 {showProfit && <th className="px-2 py-1 text-right w-[80px]">Kar</th>}
+                                {role !== 'customer' && <th className="px-2 py-1 text-center w-[90px]">Ödeme</th>}
                                 <th className="px-2 py-1 text-center w-[90px]">Durum</th>
                                 {role !== 'customer' && <th className="px-2 py-1 text-right w-[80px]">İşlem</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border/30">
-                            {filteredSales.map((sale) => (
-                                <tr
-                                    key={sale.id}
-                                    className="hover:bg-secondary/20 transition-colors group h-8 cursor-pointer"
-                                    onClick={() => {
-                                        if (role === 'admin' || role === 'manager' || role === 'sales') {
-                                            handleEditClick(sale);
-                                        }
-                                    }}
-                                >
-                                    <td className="px-2 py-0.5 whitespace-nowrap text-muted-foreground">
-                                        {new Date(sale.date).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' })}
-                                    </td>
-                                    {role !== 'customer' && (
-                                        <td className="px-2 py-0.5 font-medium text-foreground truncate max-w-[120px]" title={sale.storeName}>
-                                            {sale.storeName}
+                            {filteredSales.map((sale) => {
+                                const saleDate = new Date(sale.date);
+                                const now = new Date();
+                                const diffTime = Math.abs(now.getTime() - saleDate.getTime());
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                const isDelayed = !sale.isShipped && diffDays > 3;
+
+                                return (
+                                    <tr
+                                        key={sale.id}
+                                        className={clsx(
+                                            "transition-colors group h-8 cursor-pointer border-b border-border/30 last:border-0",
+                                            isDelayed ? "bg-red-500/10 hover:bg-red-500/20" : "hover:bg-secondary/20"
+                                        )}
+                                        onClick={() => {
+                                            if (role === 'admin' || role === 'manager' || role === 'sales') {
+                                                handleEditClick(sale);
+                                            }
+                                        }}
+                                    >
+                                        <td className="px-2 py-0.5 whitespace-nowrap text-muted-foreground">
+                                            {new Date(sale.date).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' })}
                                         </td>
-                                    )}
-                                    <td className="px-2 py-0.5 truncate max-w-[120px]" title={sale.customerName || '-'}>
-                                        {sale.customerName || <span className="text-muted-foreground/50">-</span>}
-                                    </td>
-                                    <td className="px-2 py-0.5 truncate max-w-[200px]" title={sale.item}>
-                                        {sale.item}
-                                    </td>
-                                    {role !== 'warehouse' && (
-                                        <>
-                                            <td className="px-2 py-0.5 text-right">{sale.quantity}</td>
-                                            <td className="px-2 py-0.5 text-right font-medium">
-                                                {Number(sale.total).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺
+                                        {role !== 'customer' && (
+                                            <td className="px-2 py-0.5 font-medium text-foreground truncate max-w-[120px]" title={sale.storeName}>
+                                                {sale.storeName}
                                             </td>
-                                        </>
-                                    )}
-                                    {showProfit && (
-                                        <td className="px-2 py-0.5 text-right text-green-600/90">
-                                            {Number(sale.profit).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺
+                                        )}
+                                        <td className="px-2 py-0.5 truncate max-w-[120px]" title={sale.customerName || '-'}>
+                                            {sale.customerName || <span className="text-muted-foreground/50">-</span>}
                                         </td>
-                                    )}
-                                    <td className="px-2 py-0.5 text-center">
-                                        <span className={clsx(
-                                            "inline-flex items-center px-1 py-0 rounded text-[9px] font-medium border leading-none",
-                                            sale.isShipped
-                                                ? "bg-green-500/10 text-green-500 border-green-500/20"
-                                                : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
-                                        )}>
-                                            {sale.isShipped ? 'Kargolandı' : 'Bekliyor'}
-                                        </span>
-                                    </td>
-                                    {role !== 'customer' && (
-                                        <td className="px-2 py-0.5 text-right" onClick={(e) => e.stopPropagation()}>
-                                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                {!sale.isShipped && (role === 'admin' || role === 'warehouse' || role === 'manager') && (
-                                                    <button
-                                                        onClick={() => handleShipClick(sale)}
-                                                        className="p-0.5 hover:bg-green-100 text-green-600 rounded transition-colors"
-                                                        title="Kargola"
-                                                    >
-                                                        <Truck size={12} />
-                                                    </button>
-                                                )}
-                                                {role === 'admin' && (
-                                                    <button
-                                                        onClick={() => handleEditClick(sale)}
-                                                        className="p-0.5 hover:bg-blue-100 text-blue-600 rounded transition-colors"
-                                                        title="Düzenle"
-                                                    >
-                                                        <Edit size={12} />
-                                                    </button>
-                                                )}
-                                                {(role === 'admin' || role === 'manager') && (
-                                                    <button
-                                                        className="p-0.5 hover:bg-red-100 text-red-600 rounded transition-colors"
-                                                        onClick={async () => {
-                                                            if (confirm('Satışı silmek istediğinize emin misiniz?')) {
-                                                                await deleteSale(sale.id!);
-                                                                window.location.reload();
-                                                            }
-                                                        }}
-                                                    >
-                                                        <Trash2 size={12} />
-                                                    </button>
-                                                )}
-                                            </div>
+                                        <td className="px-2 py-0.5 truncate max-w-[200px]" title={sale.item}>
+                                            {sale.item}
                                         </td>
-                                    )}
-                                </tr>
-                            ))}
+                                        {role !== 'warehouse' && (
+                                            <>
+                                                <td className="px-2 py-0.5 text-right">{sale.quantity}</td>
+                                                <td className="px-2 py-0.5 text-right font-medium">
+                                                    {Number(sale.total).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺
+                                                </td>
+                                            </>
+                                        )}
+                                        {showProfit && (
+                                            <td className="px-2 py-0.5 text-right text-green-600/90">
+                                                {Number(sale.profit).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺
+                                            </td>
+                                        )}
+                                        {role !== 'customer' && (
+                                            <td className="px-2 py-0.5 text-center">
+                                                <span className={clsx(
+                                                    "inline-flex items-center px-1 py-0 rounded text-[9px] font-medium border leading-none",
+                                                    sale.paymentStatus === 'PAID'
+                                                        ? "bg-green-500/10 text-green-500 border-green-500/20"
+                                                        : "bg-gray-500/10 text-gray-500 border-gray-500/20"
+                                                )}>
+                                                    {sale.paymentStatus === 'PAID' ? 'Ödendi' : 'Bekliyor'}
+                                                </span>
+                                            </td>
+                                        )}
+                                        <td className="px-2 py-0.5 text-center flex justify-center items-center gap-1 h-full">
+                                            <span className={clsx(
+                                                "inline-flex items-center px-1 py-0 rounded text-[9px] font-medium border leading-none",
+                                                sale.isShipped
+                                                    ? "bg-green-500/10 text-green-500 border-green-500/20"
+                                                    : (isDelayed ? "bg-red-500 text-white border-red-600 animate-pulse" : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20")
+                                            )}>
+                                                {sale.isShipped ? 'Kargolandı' : (isDelayed ? '! Gecikti' : 'Sipariş')}
+                                            </span>
+                                        </td>
+                                        {role !== 'customer' && (
+                                            <td className="px-2 py-0.5 text-right" onClick={(e) => e.stopPropagation()}>
+                                                <div className="flex justify-end gap-1">
+                                                    {!sale.isShipped && (role === 'admin' || role === 'warehouse' || role === 'manager') && (
+                                                        <button
+                                                            onClick={() => handleShipClick(sale)}
+                                                            className="p-0.5 hover:bg-green-100 text-green-600 rounded transition-colors"
+                                                            title="Kargola"
+                                                        >
+                                                            <Truck size={14} />
+                                                        </button>
+                                                    )}
+                                                    {(role === 'admin' || role === 'accountant') && sale.paymentStatus !== 'PAID' && (
+                                                        <button
+                                                            onClick={() => handlePayClick(sale)}
+                                                            className="p-0.5 hover:bg-emerald-100 text-emerald-600 rounded transition-colors"
+                                                            title="Ödeme Al"
+                                                        >
+                                                            <CreditCard size={14} />
+                                                        </button>
+                                                    )}
+                                                    {role === 'admin' && (
+                                                        <button
+                                                            onClick={() => handleEditClick(sale)}
+                                                            className="p-0.5 hover:bg-blue-100 text-blue-600 rounded transition-colors"
+                                                            title="Düzenle"
+                                                        >
+                                                            <Edit size={14} />
+                                                        </button>
+                                                    )}
+                                                    {(role === 'admin' || role === 'manager') && (
+                                                        <button
+                                                            className="p-0.5 hover:bg-red-100 text-red-600 rounded transition-colors"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setSaleToDelete(sale);
+                                                                setDeleteConfirmationOpen(true);
+                                                                setDeleteError(null);
+                                                            }}
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        )}
+                                    </tr>
+                                );
+                            })}
                             {filteredSales.length === 0 && (
                                 <tr>
                                     <td colSpan={
@@ -618,25 +656,88 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
                 )
             }
             {/* Edit Sale Modal */}
-            {editModalOpen && selectedSaleForEdit && (
-                <EditSaleModal
-                    sale={selectedSaleForEdit}
-                    onClose={() => {
-                        setEditModalOpen(false);
-                        setSelectedSaleForEdit(null);
-                    }}
-                />
-            )}
+            {
+                editModalOpen && selectedSaleForEdit && (
+                    <EditSaleModal
+                        sale={selectedSaleForEdit}
+                        onClose={() => {
+                            setEditModalOpen(false);
+                            setSelectedSaleForEdit(null);
+                        }}
+                    />
+                )
+            }
 
             {/* Add Sale Modal */}
-            {isAddSaleOpen && (
-                <AddSaleForm
-                    onClose={() => {
-                        setIsAddSaleOpen(false);
-                        window.location.reload(); // Refresh to show new sale
-                    }}
-                />
+            {
+                isAddSaleOpen && (
+                    <AddSaleForm
+                        onClose={() => {
+                            setIsAddSaleOpen(false);
+                            window.location.reload(); // Refresh to show new sale
+                        }}
+                    />
+                )
+            }
+
+            {/* Delete Confirmation Modal */}
+            {deleteConfirmationOpen && saleToDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-card w-full max-w-sm rounded-xl border border-border shadow-2xl p-6 space-y-4">
+                        <div className="space-y-2">
+                            <h3 className="text-xl font-bold text-red-600 flex items-center gap-2">
+                                <Trash2 size={24} /> Satışı Sil
+                            </h3>
+                            <p className="text-sm text-foreground">
+                                <strong>{saleToDelete.item}</strong> satışını silmek istediğinize emin misiniz?
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                Bu işlem geri alınamaz.
+                            </p>
+                        </div>
+                        {deleteError && (
+                            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+                                {deleteError}
+                            </div>
+                        )}
+                        <div className="flex gap-3 justify-end pt-2">
+                            <button
+                                onClick={() => {
+                                    setDeleteConfirmationOpen(false);
+                                    setSaleToDelete(null);
+                                    setDeleteError(null);
+                                }}
+                                className="px-4 py-2 text-sm font-medium hover:bg-secondary rounded-lg transition-colors"
+                            >
+                                İptal
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    setIsDeleting(true);
+                                    setDeleteError(null);
+                                    try {
+                                        const result = await deleteSale(saleToDelete.id!);
+                                        if (result.success) {
+                                            setDeleteConfirmationOpen(false);
+                                            window.location.reload();
+                                        } else {
+                                            setDeleteError(result.error || 'Silme işlemi başarısız');
+                                        }
+                                    } catch (err) {
+                                        setDeleteError('Bir hata oluştu');
+                                    } finally {
+                                        setIsDeleting(false);
+                                    }
+                                }}
+                                disabled={isDeleting}
+                                className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {isDeleting ? 'Siliniyor...' : 'Sil'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
-        </div>
+        </div >
     );
 }

@@ -30,15 +30,35 @@ export function SalesTable({ data }: SalesTableProps) {
         return true;
     });
 
-    const handleShip = async (id: string) => {
-        const saleToShip = sales.find(s => s.id === id);
-        if (!saleToShip) return;
+    const [shipModalOpen, setShipModalOpen] = useState(false);
+    const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
+    const [waybillNumber, setWaybillNumber] = useState('');
+    const [isShipping, setIsShipping] = useState(false);
 
-        if (confirm("Kargolandı olarak işaretlemek istiyor musunuz?")) {
-            const waybill = prompt("İrsaliye Numarası giriniz:");
-            if (waybill) {
-                await shipSale(id, saleToShip.quantity, waybill); // Full shipment
+    const handleShipClick = (id: string) => {
+        setSelectedSaleId(id);
+        setWaybillNumber('');
+        setShipModalOpen(true);
+    };
+
+    const handleShipConfirm = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedSaleId) return;
+
+        setIsShipping(true);
+        try {
+            const saleToShip = sales.find(s => s.id === selectedSaleId);
+            if (saleToShip) {
+                await shipSale(selectedSaleId, saleToShip.quantity, waybillNumber);
+                // Simple refresh or let parent handle revalidation (router refresh usually handles it if server action)
+                window.location.reload();
             }
+        } catch (error) {
+            alert('İşlem başarısız');
+        } finally {
+            setIsShipping(false);
+            setShipModalOpen(false);
+            setSelectedSaleId(null);
         }
     };
 
@@ -143,7 +163,7 @@ export function SalesTable({ data }: SalesTableProps) {
                                             </div>
                                         ) : (
                                             <button
-                                                onClick={() => sale.id && handleShip(sale.id)}
+                                                onClick={() => sale.id && handleShipClick(sale.id)}
                                                 title="Kargola"
                                                 className="p-1.5 bg-secondary hover:bg-primary/10 text-muted-foreground hover:text-primary rounded-md transition-colors"
                                             >
@@ -169,6 +189,48 @@ export function SalesTable({ data }: SalesTableProps) {
                     <button className="px-2 py-1 rounded hover:bg-secondary/50">Sonraki</button>
                 </div>
             </div>
+
+            {/* Shipment Modal */}
+            {shipModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-card w-full max-w-sm rounded-xl border border-border shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-200">
+                        <div className="space-y-2">
+                            <h3 className="text-xl font-bold flex items-center gap-2 text-primary">
+                                <Truck size={24} /> Kargo Gönderimi
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                                Lütfen kargo takip (irsaliye) numarasını giriniz.
+                            </p>
+                        </div>
+                        <form onSubmit={handleShipConfirm} className="space-y-4">
+                            <input
+                                type="text"
+                                placeholder="İrsaliye / Takip No"
+                                value={waybillNumber}
+                                onChange={(e) => setWaybillNumber(e.target.value)}
+                                className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-primary/50"
+                                required
+                            />
+                            <div className="flex gap-3 justify-end pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShipModalOpen(false)}
+                                    className="px-4 py-2 text-sm font-medium hover:bg-secondary rounded-lg transition-colors"
+                                >
+                                    İptal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isShipping}
+                                    className="px-4 py-2 text-sm font-medium bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {isShipping ? 'İşleniyor...' : 'Kargola'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

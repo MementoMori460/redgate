@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { deleteUser, updatePassword } from '@/app/actions/users';
 import { Trash2, Key, X, Check } from 'lucide-react';
+import { ConfirmationModal } from '@/app/components/ConfirmationModal';
 
 interface UserItemProps {
     user: {
@@ -18,10 +19,18 @@ export function UserItem({ user }: UserItemProps) {
     const [newPassword, setNewPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleDelete = async () => {
-        if (confirm(`${user.name} kullanıcısını silmek istediğinize emin misiniz?`)) {
-            await deleteUser(user.id);
-        }
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDeleteClick = () => {
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        setIsDeleting(true);
+        await deleteUser(user.id);
+        setIsDeleting(false);
+        setIsDeleteModalOpen(false);
     };
 
     const handlePasswordUpdate = async (e: React.FormEvent) => {
@@ -68,7 +77,7 @@ export function UserItem({ user }: UserItemProps) {
                     <Key size={18} />
                 </button>
                 <button
-                    onClick={handleDelete}
+                    onClick={handleDeleteClick}
                     className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                     title="Sil"
                 >
@@ -119,6 +128,18 @@ export function UserItem({ user }: UserItemProps) {
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleDeleteConfirm}
+                title="Kullanıcıyı Sil"
+                message={<><strong>{user.name}</strong> kullanıcısını silmek istediğinize emin misiniz?</>}
+                confirmText="Sil"
+                isDangerous={true}
+                isLoading={isDeleting}
+                icon="trash"
+            />
         </div>
     );
 }

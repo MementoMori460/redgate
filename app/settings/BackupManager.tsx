@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Download, Upload, Loader2, Database } from 'lucide-react';
 import { exportDatabase, importDatabase } from '../actions/database';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 
 export function BackupManager() {
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState('');
+    const [pendingFile, setPendingFile] = useState<File | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleBackup = async () => {
         try {
@@ -34,27 +37,27 @@ export function BackupManager() {
         }
     };
 
-    const handleRestore = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleRestore = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        setPendingFile(file);
+    };
 
-        if (!confirm('DİKKAT: Bu işlem veritabanına veri ekleyecektir. Mevcut kayıtlarınızın üzerine yazılabilir. Devam etmek istiyor musunuz?')) {
-            e.target.value = '';
-            return;
-        }
+    const handleRestoreConfirm = async () => {
+        if (!pendingFile) return;
 
         try {
             setLoading(true);
             setStatus('Dosya okunuyor...');
 
-            const text = await file.text();
+            const text = await pendingFile.text();
             const data = JSON.parse(text);
 
             setStatus('Veriler yükleniyor (büyük dosyalar zaman alabilir)...');
             await importDatabase(data);
 
             setStatus('Yedek başarıyla yüklendi!');
-            alert('Yedek başarıyla yüklendi.');
+            alert('Yedek başarıyla yüklendi.'); // This success alert is acceptable or can be replaced with toast later
             window.location.reload();
         } catch (error) {
             console.error(error);
@@ -62,7 +65,8 @@ export function BackupManager() {
             alert('Hata: ' + (error as Error).message);
         } finally {
             setLoading(false);
-            e.target.value = '';
+            setPendingFile(null);
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
@@ -90,6 +94,7 @@ export function BackupManager() {
 
                 <div className="relative">
                     <input
+                        ref={fileInputRef}
                         type="file"
                         accept=".json"
                         onChange={handleRestore}
@@ -111,6 +116,21 @@ export function BackupManager() {
                     {status}
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={!!pendingFile}
+                onClose={() => {
+                    setPendingFile(null);
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                }}
+                onConfirm={handleRestoreConfirm}
+                title="Yedekten Yükle"
+                message="DİKKAT: Bu işlem veritabanına veri ekleyecektir. Mevcut kayıtlarınızın üzerine yazılabilir. Devam etmek istiyor musunuz?"
+                confirmText="Yükle"
+                isDangerous={true}
+                isLoading={loading}
+                icon="alert"
+            />
         </div>
     );
 }

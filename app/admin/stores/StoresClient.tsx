@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { createStore, updateStore, deleteStore, StoreDTO } from '../../actions/stores';
 import { Plus, Search, MapPin, Trash2, Edit, X, Building } from 'lucide-react';
+import { ConfirmationModal } from '../../components/ConfirmationModal';
 
 interface StoresClientProps {
     initialStores: any[];
@@ -14,20 +15,30 @@ export function StoresClient({ initialStores }: StoresClientProps) {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingStore, setEditingStore] = useState<StoreDTO | null>(null);
 
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const filteredStores = stores.filter(s =>
         s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.city.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleDelete = async (id: string) => {
-        if (confirm('Bu mağazayı silmek istediğinize emin misiniz?')) {
-            const result = await deleteStore(id);
-            if (result.success) {
-                window.location.reload();
-            } else {
-                alert('Silme başarısız');
-            }
+    const handleDeleteClick = (id: string) => {
+        setDeleteModal({ isOpen: true, id });
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteModal.id) return;
+
+        setIsDeleting(true);
+        const result = await deleteStore(deleteModal.id);
+        if (result.success) {
+            window.location.reload();
+        } else {
+            alert('Silme başarısız');
+            setIsDeleting(false);
+            setDeleteModal({ isOpen: false, id: null });
         }
     };
 
@@ -111,7 +122,7 @@ export function StoresClient({ initialStores }: StoresClientProps) {
                                                     <Edit size={14} />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(store.id)}
+                                                    onClick={() => handleDeleteClick(store.id)}
                                                     className="p-1 bg-secondary/50 rounded hover:text-red-500 hover:bg-red-500/10 transition-all"
                                                     title="Sil"
                                                 >
@@ -133,6 +144,18 @@ export function StoresClient({ initialStores }: StoresClientProps) {
                     onClose={() => setIsFormOpen(false)}
                 />
             )}
+
+            <ConfirmationModal
+                isOpen={deleteModal.isOpen}
+                onClose={() => setDeleteModal({ isOpen: false, id: null })}
+                onConfirm={handleDeleteConfirm}
+                title="Mağazayı Sil"
+                message="Bu mağazayı silmek istediğinize emin misiniz?"
+                confirmText="Sil"
+                isDangerous={true}
+                isLoading={isDeleting}
+                icon="trash"
+            />
         </div>
     );
 }

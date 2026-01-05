@@ -1,45 +1,70 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getPendingOrders, updateSale } from '../../actions/sales';
-import { CheckCircle, XCircle, Clock, Package } from 'lucide-react';
-import { SalesTable } from '../../components/SalesTable';
+import { getPendingOrders, updateSale, checkAndCleanupOldOrders } from '../../actions/sales';
+import { Clock, Package } from 'lucide-react';
+import { ConfirmationModal } from '../../components/ConfirmationModal';
 
 export default function AdminOrdersPage() {
-    const [pendingOrders, setPendingOrders] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [sales, setSales] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        action: 'approve' | 'reject' | null;
+        id: string | null;
+    }>({
+        isOpen: false,
+        action: null,
+        id: null
+    });
 
     useEffect(() => {
-        loadOrders();
+        const init = async () => {
+            // First run cleanup
+            const cleanup = await checkAndCleanupOldOrders();
+            if (cleanup.count > 0) {
+                // Use a non-blocking notification or just log it instead of alert to avoid blocking UI on load
+                console.log(`${cleanup.count} adet eski sipariş temizlendi.`);
+            }
+
+            // Then fetch pending orders
+            const pendingSales = await getPendingOrders();
+            setSales(pendingSales);
+            setLoading(false);
+        };
+        init();
     }, []);
 
-    const loadOrders = async () => {
-        setIsLoading(true);
-        const pending = await getPendingOrders();
-        setPendingOrders(pending);
-        setIsLoading(false);
+    const handleActionClick = (id: string, action: 'approve' | 'reject') => {
+        setConfirmModal({
+            isOpen: true,
+            action,
+            id
+        });
     };
 
-    const handleApprove = async (id: string) => {
-        if (confirm('Siparişi onaylıyor musunuz?')) {
-            await updateSale(id, { status: 'APPROVED' });
-            loadOrders();
-        }
-    };
+    const handleConfirmAction = async () => {
+        if (!confirmModal.id || !confirmModal.action) return;
 
-    const handleReject = async (id: string) => {
-        if (confirm('Siparişi reddetmek istiyor musunuz?')) {
-            await updateSale(id, { status: 'REJECTED' });
-            loadOrders();
-        }
+        const { id, action } = confirmModal;
+        const status = action === 'approve' ? 'APPROVED' : 'REJECTED';
+
+        await updateSale(id, { status });
+
+        // Reload
+        const updatedSales = await getPendingOrders();
+        setSales(updatedSales);
+
+        setConfirmModal({ isOpen: false, action: null, id: null });
     };
 
     return (
         <div className="space-y-6">
 
-            {isLoading ? (
+            {loading ? (
                 <div className="p-8 text-center text-muted-foreground">Yükleniyor...</div>
-            ) : pendingOrders.length === 0 ? (
+            ) : sales.length === 0 ? (
                 <div className="bg-card p-12 rounded-xl border border-border border-dashed text-center text-muted-foreground flex flex-col items-center">
                     <Clock size={48} className="mb-4 opacity-50" />
                     <p className="text-lg font-medium">Bekleyen sipariş bulunmamaktadır.</p>
@@ -59,7 +84,7 @@ export default function AdminOrdersPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border/30">
-                                {pendingOrders.map((order) => (
+                                {sales.map((order) => (
                                     <tr key={order.id} className="hover:bg-secondary/10 transition-colors">
                                         <td className="px-4 py-3">
                                             <div className="flex items-center gap-3">
@@ -88,13 +113,13 @@ export default function AdminOrdersPage() {
                                         <td className="px-4 py-3 text-center">
                                             <div className="flex items-center justify-center gap-2">
                                                 <button
-                                                    onClick={() => handleReject(order.id)}
+                                                    onClick={() => handleActionClick(order.id, 'reject')}
                                                     className="px-3 py-1.5 border border-red-200 hover:bg-red-50 text-red-600 rounded-md transition-colors font-medium"
                                                 >
                                                     Reddet
                                                 </button>
                                                 <button
-                                                    onClick={() => handleApprove(order.id)}
+                                                    onClick={() => handleActionClick(order.id, 'approve')}
                                                     className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md transition-shadow shadow-sm hover:shadow font-medium"
                                                 >
                                                     Onayla
@@ -108,6 +133,21 @@ export default function AdminOrdersPage() {
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+                onConfirm={handleConfirmAction}
+                title={confirmModal.action === 'approve' ? 'Siparişi Onayla' : 'Siparişi Reddet'}
+                message={
+                    confirmModal.action === 'approve'
+                        ? 'Bu siparişi onaylamak istediğinize emin misiniz?'
+                        : 'Bu siparişi reddetmek istediğinize emin misiniz? Bu işlem geri alınamaz.'
+                }
+                confirmText={confirmModal.action === 'approve' ? 'Onayla' : 'Reddet'}
+                isDangerous={confirmModal.action === 'reject'}
+                icon={confirmModal.action === 'approve' ? 'question' : 'alert'}
+            />
         </div>
     );
 }

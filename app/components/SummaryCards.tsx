@@ -127,7 +127,7 @@ export function SummaryCards({ data, targetRevenue, lateShipmentCount = 0 }: Sum
                     <MetricItem
                         title="Hedefe Kalan"
                         value={`${Math.max(0, targetRevenue - metrics.totalRevenue).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ₺`}
-                        subValue={metrics.totalRevenue >= targetRevenue ? "Hedef Tamamlandı!" : "Kalan Tutar"}
+                        subValue={metrics.totalRevenue >= targetRevenue ? "Hedef Tamamlandı!" : undefined}
                         trend={metrics.totalRevenue >= targetRevenue ? "up" : "neutral"}
                         className={metrics.totalRevenue >= targetRevenue ? "border-green-500/50 bg-green-500/10" : ""}
                     />

@@ -490,3 +490,40 @@ export async function getMonthlyTarget(month: number, year: number) {
         return null;
     }
 }
+
+// Cleanup old pending orders (> 2 months)
+export async function checkAndCleanupOldOrders() {
+    const session = await auth();
+    if (session?.user?.role !== 'admin') {
+        return { count: 0, message: 'Unauthorized' };
+    }
+
+    const twoMonthsAgo = new Date();
+    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+
+    try {
+        const result = await prisma.sale.updateMany({
+            where: {
+                isShipped: false,
+                date: {
+                    lt: twoMonthsAgo
+                }
+            },
+            data: {
+                isShipped: true,
+                paymentStatus: 'PAID' // Assume paid if auto-closed after 2 months
+            }
+        });
+
+        if (result.count > 0) {
+            revalidatePath('/admin/orders');
+            revalidatePath('/sales');
+            revalidatePath('/');
+        }
+
+        return { count: result.count, message: 'Success' };
+    } catch (error) {
+        console.error('Cleanup error:', error);
+        return { count: 0, message: 'Error' };
+    }
+}

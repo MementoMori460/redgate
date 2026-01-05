@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { createCustomer, deleteCustomer, updateCustomer, CustomerDTO } from '../../actions/customers';
 import { importChecklistData } from '../../actions/import-legacy';
 import { Plus, Upload, Search, MoreHorizontal, Building2, MapPin, Trash2, Edit } from 'lucide-react';
+import { ConfirmationModal } from '@/app/components/ConfirmationModal';
 
 interface CustomersClientProps {
     initialCustomers: any[];
@@ -15,13 +16,25 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState<CustomerDTO | null>(null);
+    const [importConfirmOpen, setImportConfirmOpen] = useState(false);
 
-    // Hidden file input ref
+    // Delete Modal State
+    const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
+    const [customerToDelete, setCustomerToDelete] = useState<CustomerDTO | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+
+    // Hidden file input ref (moved file reading logic to after confirm)
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleImportClick = async () => {
-        if (!confirm('Excel dosyasından Müşteriler ve Satışlar senkronize edilecek. Bu işlem verileri günceller. Devam edilsin mi?')) return;
+    const handleImportClick = () => {
+        setImportConfirmOpen(true);
+    };
 
+    const handleImportConfirm = () => {
+        setImportConfirmOpen(false);
+
+        // Keep prompt for now or replace with better UI later if needed, but 'confirm' is gone.
         const password = prompt('Lütfen işlem şifresini giriniz:');
         if (password !== '3987') {
             alert('Hatalı şifre. İşlem iptal edildi.');
@@ -57,16 +70,7 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (confirm('Bu müşteriyi silmek istediğinize emin misiniz?')) {
-            const result = await deleteCustomer(id);
-            if (result.success) {
-                window.location.reload();
-            } else {
-                alert('Silme başarısız: ' + (result as any).error);
-            }
-        }
-    };
+
 
     const filteredCustomers = customers.filter(c =>
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -183,7 +187,11 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
                                                     <Edit size={14} />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(customer.id)}
+                                                    onClick={() => {
+                                                        setCustomerToDelete(customer);
+                                                        setDeleteConfirmationOpen(true);
+                                                        setDeleteError(null);
+                                                    }}
                                                     className="p-1 bg-secondary/50 rounded hover:text-red-500 hover:bg-red-500/10 transition-all"
                                                     title="Sil"
                                                 >
@@ -205,6 +213,75 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
                     onClose={() => setIsFormOpen(false)}
                 />
             )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteConfirmationOpen && customerToDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-card w-full max-w-sm rounded-xl border border-border shadow-2xl p-6 space-y-4">
+                        <div className="space-y-2">
+                            <h3 className="text-xl font-bold text-red-600 flex items-center gap-2">
+                                <Trash2 size={24} /> Müşteriyi Sil
+                            </h3>
+                            <p className="text-sm text-foreground">
+                                <strong>{customerToDelete.name}</strong> müşterisini silmek istediğinize emin misiniz?
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                Bu işlem geri alınamaz.
+                            </p>
+                        </div>
+                        {deleteError && (
+                            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+                                {deleteError}
+                            </div>
+                        )}
+                        <div className="flex gap-3 justify-end pt-2">
+                            <button
+                                onClick={() => {
+                                    setDeleteConfirmationOpen(false);
+                                    setCustomerToDelete(null);
+                                    setDeleteError(null);
+                                }}
+                                className="px-4 py-2 text-sm font-medium hover:bg-secondary rounded-lg transition-colors"
+                            >
+                                İptal
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    setIsDeleting(true);
+                                    setDeleteError(null);
+                                    try {
+                                        const result = await deleteCustomer(customerToDelete.id!);
+                                        if (result.success) {
+                                            setDeleteConfirmationOpen(false);
+                                            window.location.reload();
+                                        } else {
+                                            setDeleteError(result.error || 'Silme işlemi başarısız');
+                                        }
+                                    } catch (err) {
+                                        setDeleteError('Bir hata oluştu');
+                                    } finally {
+                                        setIsDeleting(false);
+                                    }
+                                }}
+                                disabled={isDeleting}
+                                className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {isDeleting ? 'Siliniyor...' : 'Sil'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <ConfirmationModal
+                isOpen={importConfirmOpen}
+                onClose={() => setImportConfirmOpen(false)}
+                onConfirm={handleImportConfirm}
+                title="Excel'den Aktar"
+                message="Excel dosyasından Müşteriler ve Satışlar senkronize edilecek. Bu işlem verilerini günceller. Devam edilsin mi?"
+                confirmText="Devam Et"
+                icon="question"
+            />
         </div>
     );
 }

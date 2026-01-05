@@ -43,6 +43,10 @@ export function EditSaleModal({ sale, onClose, user }: EditSaleModalProps) {
     const [waybillNumber, setWaybillNumber] = useState<string>(sale.waybillNumber || '');
     const [invoiceNumber, setInvoiceNumber] = useState<string>(sale.invoiceNumber || '');
 
+    // Status Logic
+    const [isShipped, setIsShipped] = useState<boolean>(sale.isShipped || false);
+    const [paymentStatus, setPaymentStatus] = useState<string>(sale.paymentStatus || 'UNPAID');
+
     // Store logic
     const [stores, setStores] = useState<Store[]>([]);
     const [filteredStores, setFilteredStores] = useState<Store[]>([]);
@@ -192,7 +196,9 @@ export function EditSaleModal({ sale, onClose, user }: EditSaleModalProps) {
                 profit: netProfit,
                 description: description,
                 waybillNumber: waybillNumber,
-                invoiceNumber: invoiceNumber
+                invoiceNumber: invoiceNumber,
+                isShipped: isShipped,
+                paymentStatus: paymentStatus
             });
 
             // Reload page to reflect changes
@@ -507,6 +513,32 @@ export function EditSaleModal({ sale, onClose, user }: EditSaleModalProps) {
                             </div>
                         </div>
 
+                        {/* Status & Payment - NEW SECTION */}
+                        <div className="grid grid-cols-2 gap-6 p-4 bg-secondary/10 rounded-xl border border-secondary/20">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-secondary-foreground">Kargo Durumu</label>
+                                <select
+                                    value={isShipped ? 'true' : 'false'}
+                                    onChange={(e) => setIsShipped(e.target.value === 'true')}
+                                    className="w-full bg-card border border-border rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all"
+                                >
+                                    <option value="false">Bekliyor (Sipariş)</option>
+                                    <option value="true">Kargolandı</option>
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-secondary-foreground">Ödeme Durumu</label>
+                                <select
+                                    value={paymentStatus}
+                                    onChange={(e) => setPaymentStatus(e.target.value)}
+                                    className="w-full bg-card border border-border rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary/50 outline-none transition-all"
+                                >
+                                    <option value="UNPAID">Ödeme Bekliyor</option>
+                                    <option value="PAID">Ödendi</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium text-secondary-foreground">Toplam Maliyet (TL)</label>
@@ -546,7 +578,7 @@ export function EditSaleModal({ sale, onClose, user }: EditSaleModalProps) {
                         </div>
                     </form>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

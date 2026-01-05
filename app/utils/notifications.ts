@@ -17,19 +17,22 @@ const transporter = nodemailer.createTransport({
 
 export async function checkLateShipments() {
     try {
-        const daysSetting = await getSetting('MAX_SHIPPING_DAYS') || '3';
-        const days = parseInt(daysSetting);
+        const daysSetting = await getSetting('MAX_SHIPPING_DAYS');
+        let days = parseInt(daysSetting || '3');
+        if (isNaN(days)) days = 3;
 
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - days);
+        cutoffDate.setHours(23, 59, 59, 999); // Include the entire cutoff day
+
+        console.log(`Checking Late Shipments: Days=${days}, Cutoff=${cutoffDate.toISOString()}`);
 
         const lateSales = await prisma.sale.count({
             where: {
                 isShipped: false,
-                createdAt: {
+                date: {
                     lt: cutoffDate
-                },
-                status: 'APPROVED' // Only count approved orders
+                }
             }
         });
 
