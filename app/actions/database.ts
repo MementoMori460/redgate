@@ -9,7 +9,7 @@ export async function exportDatabase() {
         throw new Error('Unauthorized');
     }
 
-    const [stores, customers, products, sales] = await Promise.all([
+    const [stores, customers, products, sales, targets] = await Promise.all([
         prisma.store.findMany(),
         prisma.customer.findMany(),
         prisma.product.findMany(),
@@ -17,14 +17,40 @@ export async function exportDatabase() {
         prisma.monthlyTarget.findMany(),
     ]);
 
+    // Helper to serialize decimals
+    const serializeDecimal = (num: any) => num?.toNumber() ?? 0;
+    const serializeOptionalDecimal = (num: any) => num?.toNumber() ?? null;
+
     return {
         timestamp: new Date().toISOString(),
         data: {
             stores,
             customers,
-            products,
-            sales,
-            monthlyTargets: await prisma.monthlyTarget.findMany() // Fix destructuring index issue or just use variable
+            products: products.map(p => ({
+                ...p,
+                price: serializeOptionalDecimal(p.price),
+                cost: serializeOptionalDecimal(p.cost),
+                createdAt: p.createdAt.toISOString(),
+                updatedAt: p.updatedAt.toISOString()
+            })),
+            sales: sales.map(s => ({
+                ...s,
+                price: serializeDecimal(s.price),
+                total: serializeDecimal(s.total),
+                profit: serializeDecimal(s.profit),
+                date: s.date.toISOString(),
+                createdAt: s.createdAt.toISOString(),
+                updatedAt: s.updatedAt.toISOString(),
+                // Keep deletedAt as ISO string if exists (it comes as Date from prisma)
+                deletedAt: s.deletedAt ? s.deletedAt.toISOString() : null
+            })),
+            monthlyTargets: targets.map(t => ({
+                ...t,
+                target: serializeDecimal(t.target),
+                success: serializeOptionalDecimal(t.success),
+                createdAt: t.createdAt.toISOString(),
+                updatedAt: t.updatedAt.toISOString()
+            }))
         }
     };
 }

@@ -45,6 +45,8 @@ model Sale {
   customerId      String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  orderNumber     String?   @unique // Format: ORD-YYYYMM-XXXX
+  deletedAt       DateTime? // Soft delete support
   customer        Customer? @relation(fields: [customerId], references: [id])
 
   @@index([date])
@@ -78,14 +80,27 @@ model GlobalSettings {
 }
 
 model Product {
-  id            String   @id @default(uuid())
-  productNumber String   @unique
-  name          String   @unique
+  id            String    @id @default(uuid())
+  productNumber String    @unique
+  name          String    @unique
   price         Decimal?
   cost          Decimal?
   description   String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  supplierId    String?
+  supplier      Supplier? @relation(fields: [supplierId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Supplier {
+  id          String    @id @default(uuid())
+  name        String
+  contactName String?
+  email       String?
+  phone       String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model MonthlyTarget {

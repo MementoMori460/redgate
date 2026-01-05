@@ -128,9 +128,13 @@ async function fetchFromDatabase() {
 
         // 7. Overall Financials
         prisma.sale.aggregate({
+            where: {
+                deletedAt: null
+            },
             _sum: {
                 total: true,
-                profit: true
+                profit: true,
+                quantity: true
             },
             _count: {
                 id: true
@@ -139,6 +143,9 @@ async function fetchFromDatabase() {
 
         // 8. Fetch Sales for Client Interaction (Optimized Select)
         prisma.sale.findMany({
+            where: {
+                deletedAt: null
+            },
             orderBy: { date: 'asc' },
             select: {
                 id: true,
@@ -224,10 +231,10 @@ async function fetchFromDatabase() {
 
     return {
         financials: {
-            totalRevenue: safeNumber(financials._sum.total),
-            totalProfit: safeNumber(financials._sum.profit),
-            totalCost: safeNumber(financials._sum.total) - safeNumber(financials._sum.profit),
-            totalSales: financials._count.id
+            totalSales: financials._sum?.total?.toNumber() || 0,
+            totalProfit: financials._sum?.profit?.toNumber() || 0,
+            itemCount: financials._sum?.quantity || 0,
+            transactionCount: financials._count?.id || 0
         },
         monthlyComparison: monthlyComparison.reverse(),
         monthlyData: monthlyComparison,

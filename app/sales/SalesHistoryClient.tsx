@@ -3,8 +3,7 @@
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useTransition } from 'react';
 import { SaleDTO, deleteSale, shipSale, markSaleAsPaid } from '../actions/sales';
-import { EditSaleModal } from '../components/EditSaleModal';
-import { AddSaleForm } from '../components/AddSaleForm'; // Imported AddSaleForm
+// Modals removed
 import { Search, Calendar, Filter, ArrowRight, ArrowLeft, MoreHorizontal, Download, Truck, CreditCard, FileText, Trash2, Edit, TrendingUp, Plus } from 'lucide-react';
 import { useRole } from '../contexts/RoleContext';
 import { clsx } from "clsx";
@@ -24,7 +23,8 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
     const [isPending, startTransition] = useTransition();
 
     const [sales, setSales] = useState(initialSales);
-    const [isAddSaleOpen, setIsAddSaleOpen] = useState(false);
+    // isAddSaleOpen is now derived from URL to prevent synchronization issues
+    const isAddSaleOpen = searchParams.get('add') === 'true';
     const [search, setSearch] = useState('');
 
     // Construct Date object from props for UI display
@@ -39,6 +39,8 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
 
     const [regionFilter, setRegionFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState<string | null>(null);
+
+
 
     useEffect(() => {
         const filter = searchParams.get('filter');
@@ -98,8 +100,7 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
     };
 
     const handleEditClick = (sale: SaleDTO) => {
-        setSelectedSaleForEdit(sale);
-        setEditModalOpen(true);
+        router.push(`/sales/edit/${sale.id}`);
     };
 
     const updateMonth = (newDate: Date) => {
@@ -216,10 +217,13 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
     return (
         <div className="space-y-2">
             {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-2 justify-between items-start md:items-center">
+            {/* Filters */}
+            {/* Filters */}
+            {/* Filters */}
+            <div className="flex flex-col md:flex-row gap-2 justify-between items-center">
 
-                {/* Date Navigation (Moved to Top) */}
-                <div className="flex items-center gap-1 bg-card border border-border/50 rounded-lg p-1 shadow-none">
+                {/* Date Navigation - Left aligned */}
+                <div className="flex items-center gap-1 bg-card border border-border/50 rounded-lg p-1 shadow-none self-start md:self-auto">
                     <button onClick={handlePrevMonth} className="p-1 px-2 hover:bg-secondary rounded text-muted-foreground hover:text-foreground transition-colors">
                         <ArrowLeft size={14} />
                     </button>
@@ -232,41 +236,33 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
                     </button>
                 </div>
 
-                {/* Search & Region */}
-                <div className="flex gap-2 flex-1 w-full md:w-auto">
-                    <div className="relative flex-1">
+                {/* Right Side: Search, Region */}
+                <div className="flex gap-2 w-full md:w-auto items-center justify-end">
+
+                    {/* Search */}
+                    <div className="relative flex-1 md:flex-none md:w-[200px]">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
                         <input
                             type="text"
                             placeholder="Ara..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-8 pr-3 py-1.5 text-xs border border-border/50 rounded-lg bg-card focus:ring-1 focus:ring-primary/50 outline-none transition-all shadow-none"
+                            className="w-full pl-8 pr-3 py-1.5 text-xs border border-border/50 rounded-lg bg-card focus:ring-1 focus:ring-primary/50 outline-none transition-all shadow-none h-[34px]"
                         />
                     </div>
-                    {role !== 'customer' && (
-                        <div className="flex gap-2">
-                            <select
-                                value={regionFilter}
-                                onChange={(e) => setRegionFilter(e.target.value)}
-                                className="px-2 py-1.5 text-xs border border-border/50 rounded-lg bg-card outline-none min-w-[120px] shadow-none"
-                            >
-                                <option value="">Tüm Bölgeler</option>
-                                {uniqueRegions.map(r => (
-                                    <option key={r} value={r}>{r}</option>
-                                ))}
-                            </select>
 
-                            {(role === 'admin' || role === 'sales' || role === 'manager') && (
-                                <button
-                                    onClick={() => setIsAddSaleOpen(true)}
-                                    className="bg-primary hover:bg-primary/90 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 shadow-sm shadow-primary/20 whitespace-nowrap"
-                                >
-                                    <Plus size={14} />
-                                    Satış Ekle
-                                </button>
-                            )}
-                        </div>
+                    {/* Region Filter */}
+                    {role !== 'customer' && (
+                        <select
+                            value={regionFilter}
+                            onChange={(e) => setRegionFilter(e.target.value)}
+                            className="px-2 py-1.5 text-xs border border-border/50 rounded-lg bg-card outline-none min-w-[120px] shadow-none h-[34px]"
+                        >
+                            <option value="">Tüm Bölgeler</option>
+                            {uniqueRegions.map(r => (
+                                <option key={r} value={r}>{r}</option>
+                            ))}
+                        </select>
                     )}
                 </div>
             </div>
@@ -311,6 +307,7 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
                         <thead className="bg-secondary/30 text-[10px] uppercase text-muted-foreground font-medium border-b border-border/50">
                             <tr>
                                 <th className="px-2 py-1 text-left w-[80px]">Tarih</th>
+                                <th className="px-2 py-1 text-left w-[110px]">Sipariş No</th>
                                 {role !== 'customer' && <th className="px-2 py-1 text-left w-[120px]">Mağaza</th>}
                                 <th className="px-2 py-1 text-left w-[120px]">Müşteri</th>
                                 <th className="px-2 py-1 text-left">Ürün</th>
@@ -349,6 +346,9 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
                                     >
                                         <td className="px-2 py-0.5 whitespace-nowrap text-muted-foreground">
                                             {new Date(sale.date).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' })}
+                                        </td>
+                                        <td className="px-2 py-0.5 whitespace-nowrap font-mono text-xs text-muted-foreground">
+                                            {sale.orderNumber || '-'}
                                         </td>
                                         {role !== 'customer' && (
                                             <td className="px-2 py-0.5 font-medium text-foreground truncate max-w-[120px]" title={sale.storeName}>
@@ -448,7 +448,7 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
                             {filteredSales.length === 0 && (
                                 <tr>
                                     <td colSpan={
-                                        4 + // Tarih, Mağaza, Müşteri, Ürün
+                                        5 + // Tarih, Sipariş No, Mağaza, Müşteri, Ürün
                                         (role !== 'warehouse' ? 2 : 0) + // Adet, Tutar
                                         (showProfit ? 1 : 0) + // Kar
                                         1 + // Durum
@@ -489,15 +489,7 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
                 </div>
             </div >
 
-            {/* Edit Modal */}
-            {
-                editModalOpen && selectedSaleForEdit && (
-                    <EditSaleModal
-                        sale={selectedSaleForEdit}
-                        onClose={() => setEditModalOpen(false)}
-                    />
-                )
-            }
+
 
             {/* Shipment Modal */}
             {
@@ -593,30 +585,7 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
                     </div>
                 )
             }
-            {/* Edit Sale Modal */}
-            {
-                editModalOpen && selectedSaleForEdit && (
-                    <EditSaleModal
-                        sale={selectedSaleForEdit}
-                        onClose={() => {
-                            setEditModalOpen(false);
-                            setSelectedSaleForEdit(null);
-                        }}
-                    />
-                )
-            }
 
-            {/* Add Sale Modal */}
-            {
-                isAddSaleOpen && (
-                    <AddSaleForm
-                        onClose={() => {
-                            setIsAddSaleOpen(false);
-                            window.location.reload(); // Refresh to show new sale
-                        }}
-                    />
-                )
-            }
 
             {/* Delete Confirmation Modal */}
             {deleteConfirmationOpen && saleToDelete && (

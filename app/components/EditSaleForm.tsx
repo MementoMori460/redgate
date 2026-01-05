@@ -1,16 +1,14 @@
 'use client';
 
-import { X, Search, User as UserIcon, Package, Plus } from 'lucide-react';
+import { X, Search, User as UserIcon, Package } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { createSale, getStores } from '../actions/sales';
-import { getCustomers } from '../actions/customers';
+import { updateSale, getStores, getCustomers, SaleDTO } from '../actions/sales';
 import { User } from 'next-auth';
 import { getUsers } from '../actions/users';
 import { getProducts, ProductDTO } from '../actions/products';
 
-import { useRole } from '../contexts/RoleContext';
-
-interface AddSaleFormProps {
+interface EditSaleFormProps {
+    sale: SaleDTO;
     onSuccess: () => void;
     onCancel: () => void;
 }
@@ -30,20 +28,24 @@ type UserType = {
 };
 
 type Customer = {
-    id: string;
     name: string;
     contact: string;
-    email: string;
-    city?: string;
 };
 
-export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
-    const { role, currentUser } = useRole();
-    const [quantity, setQuantity] = useState<number>(1);
-    const [unitPrice, setUnitPrice] = useState<number>(0);
-    const [cost, setCost] = useState<number>(0);
-    const [totalPrice, setTotalPrice] = useState<number>(0);
-    const [netProfit, setNetProfit] = useState<number>(0);
+export function EditSaleForm({ sale, onSuccess, onCancel }: EditSaleFormProps) {
+    const [quantity, setQuantity] = useState<number>(sale.quantity);
+    const [unitPrice, setUnitPrice] = useState<number>(sale.price);
+    const [cost, setCost] = useState<number>(sale.total - sale.profit);
+    const [totalPrice, setTotalPrice] = useState<number>(sale.total);
+    const [netProfit, setNetProfit] = useState<number>(sale.profit);
+    const [date, setDate] = useState<string>(sale.date);
+    const [description, setDescription] = useState<string>(sale.description || '');
+    const [waybillNumber, setWaybillNumber] = useState<string>(sale.waybillNumber || '');
+    const [invoiceNumber, setInvoiceNumber] = useState<string>(sale.invoiceNumber || '');
+
+    // Status Logic
+    const [isShipped, setIsShipped] = useState<boolean>(sale.isShipped || false);
+    const [paymentStatus, setPaymentStatus] = useState<string>(sale.paymentStatus || 'UNPAID');
 
     // Store logic
     const [stores, setStores] = useState<Store[]>([]);
@@ -55,18 +57,8 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
     const [salesPersons, setSalesPersons] = useState<UserType[]>([]);
 
     // Customer Logic
-    const [customerName, setCustomerName] = useState('');
-    const [customerContact, setCustomerContact] = useState('');
-    const [customerEmail, setCustomerEmail] = useState('');
-
-    // Other Form Fields
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-    const [description, setDescription] = useState('');
-    const [waybillNumber, setWaybillNumber] = useState('');
-    const [invoiceNumber, setInvoiceNumber] = useState('');
-    const [isShipped, setIsShipped] = useState(false);
-    const [paymentStatus, setPaymentStatus] = useState('UNPAID');
-
+    const [customerName, setCustomerName] = useState(sale.customerName || '');
+    const [customerContact, setCustomerContact] = useState(sale.customerContact || '');
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
     const [showCustomerSuggestions, setShowCustomerSuggestions] = useState(false);
@@ -75,40 +67,26 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
     // Product Logic
     const [products, setProducts] = useState<ProductDTO[]>([]);
     const [filteredProducts, setFilteredProducts] = useState<ProductDTO[]>([]);
-    const [itemName, setItemName] = useState('');
+    const [itemName, setItemName] = useState(sale.item);
     const [showProductSuggestions, setShowProductSuggestions] = useState(false);
     const productWrapperRef = useRef<HTMLDivElement>(null);
 
     // Form fields linked to auto-fill
-    const [storeCode, setStoreCode] = useState('');
-    const [storeName, setStoreName] = useState('');
-    const [city, setCity] = useState('');
-    const [region, setRegion] = useState('');
-    const [salesPerson, setSalesPerson] = useState('');
+    const [storeCode, setStoreCode] = useState(sale.storeCode);
+    const [storeName, setStoreName] = useState(sale.storeName);
+    const [city, setCity] = useState(sale.city);
+    const [region, setRegion] = useState(sale.region);
+    const [salesPerson, setSalesPerson] = useState(sale.salesPerson);
 
     useEffect(() => {
         getStores().then(setStores);
-        getCustomers().then(rawCustomers => {
-            setCustomers(rawCustomers.map((c: any) => ({
-                id: c.id,
-                name: c.name,
-                contact: c.phone || '', // Map phone to contact for now
-                email: c.email || '',
-                city: c.city || ''
-            })));
-        });
+        getCustomers().then(setCustomers);
         getProducts().then(setProducts);
 
-        // Setup based on role
-        if (role === 'sales') {
-            setSalesPerson(currentUser || '');
-        } else if (role === 'admin' || role === 'warehouse' || role === 'accountant' || role === 'manager') {
-            getUsers().then(users => {
-                setSalesPersons(users as UserType[]);
-            });
-        }
+        getUsers().then(users => {
+            setSalesPersons(users as UserType[]);
+        });
 
-        // Click outside to close suggestions
         function handleClickOutside(event: MouseEvent) {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
                 setShowSuggestions(false);
@@ -122,7 +100,7 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
         }
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [role, currentUser]);
+    }, []);
 
     const handleCustomerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -138,7 +116,6 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
     const selectCustomer = (customer: Customer) => {
         setCustomerName(customer.name);
         setCustomerContact(customer.contact);
-        setCustomerEmail(customer.email);
         setShowCustomerSuggestions(false);
     };
 
@@ -165,9 +142,7 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
 
     const [discountRate, setDiscountRate] = useState<number>(0);
 
-    // Calculate discounted price (for display and final total)
     const calculateDiscountedPrice = () => {
-        if (!discountRate || discountRate <= 0) return unitPrice;
         return unitPrice * (1 - discountRate / 100);
     };
 
@@ -199,21 +174,19 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
         setShowSuggestions(false);
     };
 
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         try {
-            await createSale({
+            await updateSale(sale.id!, {
                 date: date,
                 storeCode: storeCode,
                 region: region,
                 city: city,
                 storeName: storeName,
                 salesPerson: salesPerson,
-                customerName: customerName.trim(),
+                customerName: customerName,
                 customerContact: customerContact,
-                email: customerEmail,
                 item: itemName,
                 quantity: quantity,
                 price: calculateDiscountedPrice(),
@@ -227,7 +200,7 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
             });
             onSuccess();
         } catch (error) {
-            alert('Satış eklenirken bir hata oluştu.');
+            alert('Satış güncellenirken bir hata oluştu.');
         }
     };
 
@@ -291,8 +264,8 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
                     <input
                         type="text"
                         value={region}
-                        readOnly
-                        className="w-full bg-transparent border-0 border-b border-border/50 px-0 py-0.5 text-[10px] font-medium focus:ring-0 focus:border-primary placeholder:text-muted-foreground/30 cursor-not-allowed"
+                        onChange={(e) => setRegion(e.target.value)}
+                        className="w-full bg-transparent border-0 border-b border-border/50 px-0 py-0.5 text-[10px] font-medium focus:ring-0 focus:border-primary placeholder:text-muted-foreground/30"
                         placeholder="-"
                     />
                 </div>
@@ -301,8 +274,8 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
                     <input
                         type="text"
                         value={city}
-                        readOnly
-                        className="w-full bg-transparent border-0 border-b border-border/50 px-0 py-0.5 text-[10px] font-medium focus:ring-0 focus:border-primary placeholder:text-muted-foreground/30 cursor-not-allowed"
+                        onChange={(e) => setCity(e.target.value)}
+                        className="w-full bg-transparent border-0 border-b border-border/50 px-0 py-0.5 text-[10px] font-medium focus:ring-0 focus:border-primary placeholder:text-muted-foreground/30"
                         placeholder="-"
                     />
                 </div>
@@ -311,8 +284,8 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
                     <input
                         type="text"
                         value={storeName}
-                        readOnly
-                        className="w-full bg-transparent border-0 border-b border-border/50 px-0 py-0.5 text-[10px] font-medium focus:ring-0 focus:border-primary placeholder:text-muted-foreground/30 cursor-not-allowed"
+                        onChange={(e) => setStoreName(e.target.value)}
+                        className="w-full bg-transparent border-0 border-b border-border/50 px-0 py-0.5 text-[10px] font-medium focus:ring-0 focus:border-primary placeholder:text-muted-foreground/30"
                         placeholder="-"
                     />
                 </div>
@@ -334,7 +307,7 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
                                     setShowCustomerSuggestions(true);
                                 }}
                                 className="w-full h-9 md:h-8 bg-background border border-border rounded px-2 pl-8 text-xs focus:ring-1 focus:ring-primary outline-none"
-                                placeholder="Müşteri Adı Ara..."
+                                placeholder="Müşteri Adı"
                             />
                             <UserIcon className="absolute left-2.5 top-2.5 md:top-2 text-muted-foreground" size={14} />
                         </div>
@@ -342,27 +315,21 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
                             <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded shadow-lg max-h-40 overflow-y-auto z-50">
                                 {filteredCustomers.map((c, i) => (
                                     <div key={i} onClick={() => selectCustomer(c)} className="px-3 py-2 hover:bg-accent cursor-pointer text-[10px] font-medium">
-                                        <div className="font-medium">{c.name}</div>
-                                        <div className="text-[9px] text-muted-foreground">{c.city} • {c.contact}</div>
+                                        {c.name}
                                     </div>
                                 ))}
-                            </div>
-                        )}
-                        {customerName && !customers.some(c => c.name.toLowerCase() === customerName.toLowerCase()) && (
-                            <div className="text-[9px] text-blue-500 font-medium mt-0.5 ml-1 flex items-center gap-1">
-                                <Plus size={10} /> Yeni kayıt
                             </div>
                         )}
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-[10px] font-semibold text-muted-foreground">İletişim</label>
+                        <label className="text-[10px] font-semibold text-muted-foreground">Email / Telefon</label>
                         <input
                             type="text"
                             value={customerContact}
                             onChange={(e) => setCustomerContact(e.target.value)}
                             className="w-full h-9 md:h-8 bg-background border border-border rounded px-2 text-xs focus:ring-1 focus:ring-primary outline-none"
-                            placeholder="Tel / Email"
+                            placeholder="ornek@email.com / 05..."
                         />
                     </div>
 
@@ -385,7 +352,6 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
                                 value={salesPerson}
                                 onChange={(e) => setSalesPerson(e.target.value)}
                                 className="w-full h-9 md:h-8 bg-background border border-border rounded px-2 text-xs"
-                                placeholder="Personel Adı"
                             />
                         )}
                     </div>
@@ -562,7 +528,7 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
                     type="submit"
                     className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 md:py-1.5 rounded text-xs font-medium shadow-sm transition-all active:scale-95"
                 >
-                    Satış Ekle
+                    Değişiklikleri Kaydet
                 </button>
             </div>
         </form>

@@ -11,19 +11,24 @@ export type ProductDTO = {
     price: number
     cost?: number
     description?: string | null
+    supplierId?: string | null
+    supplierName?: string | null
 }
 
 export async function getProducts() {
     try {
         const products = await prisma.product.findMany({
-            orderBy: { name: 'asc' }
+            orderBy: { name: 'asc' },
+            include: { supplier: true }
         })
         return products.map(p => ({
             ...p,
             price: p.price ? p.price.toNumber() : 0,
             cost: p.cost ? p.cost.toNumber() : 0,
             productNumber: p.productNumber || '', // Ensure string
-            description: p.description
+            description: p.description,
+            supplierId: p.supplierId,
+            supplierName: p.supplier?.name
         }))
     } catch (error) {
         console.error("Failed to fetch products:", error)
@@ -60,7 +65,8 @@ export async function createProduct(data: ProductDTO) {
                 productNumber: pNum!,
                 price: data.price,
                 cost: data.cost,
-                description: data.description
+                description: data.description,
+                supplierId: data.supplierId
             }
         })
         revalidatePath('/admin/products')
@@ -81,7 +87,8 @@ export async function updateProduct(id: string, data: Partial<ProductDTO>) {
                 productNumber: data.productNumber,
                 price: data.price,
                 cost: data.cost,
-                description: data.description
+                description: data.description,
+                supplierId: data.supplierId
             }
         })
         revalidatePath('/admin/products')

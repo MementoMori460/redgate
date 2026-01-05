@@ -25,13 +25,13 @@ export function ChangePasswordForm() {
     }
 
     return (
-        <div className="p-6 flex flex-col md:flex-row md:items-start justify-between gap-6 group hover:bg-secondary/5 transition-colors">
+        <div className="p-6 flex flex-col md:flex-row md:items-start justify-between gap-6 group hover:bg-secondary/5 transition-colors border border-border/50 rounded-lg bg-card h-full">
             <div className="flex-1 space-y-1">
                 <h3 className="text-base font-medium flex items-center gap-2">
                     <Key size={18} className="text-muted-foreground" />
                     Şifre Değiştir
                 </h3>
-                <p className="text-sm text-muted-foreground">Hesap giriş şifrenizi güncelleyin.</p>
+
             </div>
 
             <form onSubmit={handleSubmit} className="w-full md:w-80 space-y-3">

@@ -33,11 +33,13 @@ export function SalesTable({ data }: SalesTableProps) {
     const [shipModalOpen, setShipModalOpen] = useState(false);
     const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
     const [waybillNumber, setWaybillNumber] = useState('');
+    const [shipQuantity, setShipQuantity] = useState(0);
     const [isShipping, setIsShipping] = useState(false);
 
-    const handleShipClick = (id: string) => {
+    const handleShipClick = (id: string, currentQty: number) => {
         setSelectedSaleId(id);
         setWaybillNumber('');
+        setShipQuantity(currentQty);
         setShipModalOpen(true);
     };
 
@@ -49,7 +51,7 @@ export function SalesTable({ data }: SalesTableProps) {
         try {
             const saleToShip = sales.find(s => s.id === selectedSaleId);
             if (saleToShip) {
-                await shipSale(selectedSaleId, saleToShip.quantity, waybillNumber);
+                await shipSale(selectedSaleId, shipQuantity, waybillNumber);
                 // Simple refresh or let parent handle revalidation (router refresh usually handles it if server action)
                 window.location.reload();
             }
@@ -90,6 +92,7 @@ export function SalesTable({ data }: SalesTableProps) {
                     <thead className="text-muted-foreground bg-secondary/20 border-b border-border/50 uppercase font-medium tracking-wide">
                         <tr>
                             <th className="px-4 py-3 font-medium">Tarih</th>
+                            <th className="px-4 py-3 font-medium">Sipariş No</th>
                             <th className="px-4 py-3 font-medium">Kod</th>
                             <th className="px-4 py-3 font-medium">Bölge / Şehir</th>
                             <th className="px-4 py-3 font-medium">Satış Personeli</th>
@@ -106,6 +109,7 @@ export function SalesTable({ data }: SalesTableProps) {
                         {filteredSales.map((sale) => (
                             <tr key={sale.id} className="hover:bg-secondary/10 transition-colors group">
                                 <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{sale.date}</td>
+                                <td className="px-4 py-3 text-foreground font-mono font-medium">{sale.orderNumber || '-'}</td>
                                 <td className="px-4 py-3 font-mono text-primary/80">{sale.storeCode}</td>
                                 <td className="px-4 py-3 text-foreground">
                                     <div className="flex flex-col">
@@ -163,7 +167,7 @@ export function SalesTable({ data }: SalesTableProps) {
                                             </div>
                                         ) : (
                                             <button
-                                                onClick={() => sale.id && handleShipClick(sale.id)}
+                                                onClick={() => sale.id && handleShipClick(sale.id, sale.quantity)}
                                                 title="Kargola"
                                                 className="p-1.5 bg-secondary hover:bg-primary/10 text-muted-foreground hover:text-primary rounded-md transition-colors"
                                             >
@@ -199,18 +203,43 @@ export function SalesTable({ data }: SalesTableProps) {
                                 <Truck size={24} /> Kargo Gönderimi
                             </h3>
                             <p className="text-sm text-muted-foreground">
-                                Lütfen kargo takip (irsaliye) numarasını giriniz.
+                                Lütfen sevk detaylarını giriniz.
                             </p>
                         </div>
                         <form onSubmit={handleShipConfirm} className="space-y-4">
-                            <input
-                                type="text"
-                                placeholder="İrsaliye / Takip No"
-                                value={waybillNumber}
-                                onChange={(e) => setWaybillNumber(e.target.value)}
-                                className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-primary/50"
-                                required
-                            />
+                            <div>
+                                <label className="text-xs font-medium text-muted-foreground mb-1 block">Sevk Adedi</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max={sales.find(s => s.id === selectedSaleId)?.quantity}
+                                    value={shipQuantity}
+                                    onChange={(e) => setShipQuantity(parseInt(e.target.value))}
+                                    className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-primary/50"
+                                    required
+                                />
+                                {selectedSaleId && sales.find(s => s.id === selectedSaleId) && shipQuantity < (sales.find(s => s.id === selectedSaleId)?.quantity || 0) && (
+                                    <div className="mt-2 text-xs text-amber-600 bg-amber-50 p-2 rounded flex items-start gap-2">
+                                        <div className="shrink-0 mt-0.5">⚠️</div>
+                                        <span>
+                                            Dikkat! Kalan <strong>{(sales.find(s => s.id === selectedSaleId)?.quantity || 0) - shipQuantity}</strong> adet ürün için otomatik olarak yeni bir sipariş kaydı ("Bekliyor" durumunda) oluşturulacaktır.
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-medium text-muted-foreground mb-1 block">İrsaliye / Takip No</label>
+                                <input
+                                    type="text"
+                                    placeholder="İrsaliye / Takip No"
+                                    value={waybillNumber}
+                                    onChange={(e) => setWaybillNumber(e.target.value)}
+                                    className="w-full bg-secondary/30 border border-border rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-primary/50"
+                                    required
+                                />
+                            </div>
+
                             <div className="flex gap-3 justify-end pt-2">
                                 <button
                                     type="button"

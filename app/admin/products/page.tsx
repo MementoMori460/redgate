@@ -1,5 +1,6 @@
 import { ProductsClient } from './ProductsClient';
 import { getProducts } from '@/app/actions/products';
+import { getSuppliers } from '@/app/actions/suppliers';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 
@@ -13,12 +14,13 @@ export default async function ProductsPage() {
     }
 
     const products = await getProducts();
+    const suppliers = await getSuppliers();
 
     return (
         <div className="space-y-6">
 
 
-            <ProductsClient initialProducts={products} />
+            <ProductsClient initialProducts={products} suppliers={suppliers} />
         </div>
     );
 }

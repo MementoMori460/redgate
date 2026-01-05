@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { toTitleCaseTR } from "@/lib/utils"
 import { auth } from "@/auth"
+import { sendShippingEmail, sendNewOrderEmailToAdmins, sendBatchOrderEmailToAdmins } from "../utils/notifications";
 
 export type SaleDTO = {
     id?: string
@@ -28,6 +29,7 @@ export type SaleDTO = {
     waybillNumber?: string | null
     invoiceNumber?: string | null
     paymentStatus?: string | null
+    orderNumber?: string | null // New field
 }
 
 export async function getSales(month?: number, year?: number) {
@@ -36,7 +38,9 @@ export async function getSales(month?: number, year?: number) {
         const role = session?.user?.role?.toLowerCase();
         const name = session?.user?.name;
 
-        let whereClause: any = {};
+        let whereClause: any = {
+            deletedAt: null // Exclude soft-deleted items
+        };
 
         // Date Filtering (Default to current month if not provided)
         // Note: Javascript months are 0-11
@@ -89,10 +93,42 @@ export async function getSales(month?: number, year?: number) {
             waybillNumber: canSeeWaybill ? (sale.waybillNumber || '') : '',
             invoiceNumber: canSeeInvoice ? (sale.invoiceNumber || '') : '',
             paymentStatus: canSeeInvoice ? (sale.paymentStatus || 'UNPAID') : '',
+            orderNumber: sale.orderNumber || ''
         }))
     } catch (error) {
         console.error("Failed to fetch sales:", error)
         return []
+    }
+}
+export async function getSaleById(id: string) {
+    try {
+        const sale = await prisma.sale.findUnique({
+            where: { id }
+        });
+
+        if (!sale) return null;
+
+        // Convert Decimal and Date
+        return {
+            ...sale,
+            date: sale.date.toISOString().split('T')[0],
+            createdAt: sale.createdAt.toISOString(),
+            updatedAt: sale.updatedAt.toISOString(),
+            customerName: sale.customerName || '',
+            customerContact: sale.customerContact || '',
+            price: sale.price.toNumber(),
+            total: sale.total.toNumber(),
+            profit: sale.profit.toNumber(),
+            status: sale.status,
+            description: sale.description || '',
+            waybillNumber: sale.waybillNumber || '',
+            invoiceNumber: sale.invoiceNumber || '',
+            paymentStatus: sale.paymentStatus || '',
+            orderNumber: sale.orderNumber || ''
+        };
+    } catch (error) {
+        console.error("Failed to fetch sale by id:", error);
+        return null;
     }
 }
 
@@ -104,7 +140,8 @@ export async function getPendingOrders() {
 
         const pendingSales = await prisma.sale.findMany({
             where: {
-                status: 'PENDING'
+                status: 'PENDING',
+                deletedAt: null // Exclude deleted
             },
             orderBy: {
                 date: 'asc' // Show oldest first
@@ -127,6 +164,7 @@ export async function getPendingOrders() {
             waybillNumber: sale.waybillNumber || '',
             invoiceNumber: sale.invoiceNumber || '',
             paymentStatus: sale.paymentStatus || '',
+            orderNumber: sale.orderNumber || ''
         }));
 
     } catch (error) {
@@ -164,6 +202,39 @@ export async function createSale(data: SaleDTO) {
             }
         }
 
+        // Generate Order Number
+        const now = new Date(data.date);
+        const year = now.getFullYear();
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const key = `${year}${month}`; // YYYYMM
+
+        // Find max order number for this month
+        // We look for orderNumbers starting with "ORD-YYYYMM-"
+        const prefix = `ORD-${key}-`;
+        const lastSale = await prisma.sale.findFirst({
+            where: {
+                orderNumber: {
+                    startsWith: prefix
+                }
+            },
+            orderBy: {
+                orderNumber: 'desc'
+            },
+            select: {
+                orderNumber: true
+            }
+        });
+
+        let sequence = 1;
+        if (lastSale && lastSale.orderNumber) {
+            const parts = lastSale.orderNumber.split('-');
+            if (parts.length === 3) {
+                sequence = parseInt(parts[2], 10) + 1;
+            }
+        }
+
+        const orderNumber = `${prefix}${sequence.toString().padStart(4, '0')}`;
+
         const newSale = await prisma.sale.create({
             data: {
                 date: new Date(data.date),
@@ -183,9 +254,12 @@ export async function createSale(data: SaleDTO) {
                 isShipped: data.isShipped || false,
                 status: data.status || 'APPROVED',
                 description: data.description,
+                orderNumber: orderNumber // Assign generated number
             }
         })
         revalidatePath('/')
+        revalidatePath('/sales')
+        revalidatePath('/admin/orders')
 
         // Convert Decimals for client
         const serializedSale = {
@@ -195,11 +269,13 @@ export async function createSale(data: SaleDTO) {
             updatedAt: newSale.updatedAt.toISOString(),
             customerName: newSale.customerName || '',
             customerContact: newSale.customerContact || '',
-            price: newSale.price.toNumber(),
-            total: newSale.total.toNumber(),
             profit: newSale.profit.toNumber(),
             description: newSale.description || '',
+            orderNumber: newSale.orderNumber || ''
         }
+
+        // Send Notification (Fire & Forget)
+        sendNewOrderEmailToAdmins(newSale.id).catch(err => console.error("Failed to send notification:", err));
 
         return { success: true, data: serializedSale }
     } catch (error) {
@@ -322,8 +398,12 @@ export async function updateSale(id: string, data: Partial<SaleDTO>) {
 
 export async function deleteSale(id: string) {
     try {
-        await prisma.sale.delete({
-            where: { id }
+        // Soft delete: set deletedAt to now
+        await prisma.sale.update({
+            where: { id },
+            data: {
+                deletedAt: new Date()
+            }
         })
         revalidatePath('/')
         return { success: true }
@@ -333,7 +413,6 @@ export async function deleteSale(id: string) {
     }
 }
 
-import { sendShippingEmail, sendNewOrderEmailToAdmins, sendBatchOrderEmailToAdmins } from "../utils/notifications";
 
 export async function shipSale(id: string, shippedQuantity: number, waybillNumber: string) {
     try {

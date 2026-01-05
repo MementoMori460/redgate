@@ -33,7 +33,11 @@ export function Topbar() {
                 >
                     <Menu size={20} />
                 </button>
-                <h1 className="text-xl font-bold tracking-tight hidden md:block">{getPageTitle()}</h1>
+                {(pathname === '/' || (pathname.includes('/sales') && !pathname.includes('/edit'))) && (role === 'admin' || role === 'sales' || role === 'manager') ? (
+                    <AddSaleButton />
+                ) : (
+                    <h1 className="text-xl font-bold tracking-tight hidden md:block">{getPageTitle()}</h1>
+                )}
             </div>
 
             <div className="flex items-center gap-4">
@@ -56,7 +60,8 @@ export function Topbar() {
 
 import { refreshReportCache } from '@/app/actions/reports';
 import { useTransition } from 'react';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 function UpdateDataButton() {
     const [isPending, startTransition] = useTransition();
@@ -77,4 +82,19 @@ function UpdateDataButton() {
             {isPending ? 'Güncelleniyor...' : 'Verileri Güncelle'}
         </button>
     );
+}
+
+function AddSaleButton() {
+    const router = useRouter();
+    const pathname = usePathname();
+
+    return (
+        <button
+            onClick={() => router.push('/sales/add')}
+            className="flex items-center gap-2 px-3 py-1.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-xs font-medium transition-colors shadow-sm shadow-primary/20"
+        >
+            <Plus size={14} />
+            Satış Ekle
+        </button>
+    )
 }

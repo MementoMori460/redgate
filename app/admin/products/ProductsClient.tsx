@@ -2,15 +2,17 @@
 
 import { useState } from 'react';
 import { ProductDTO, createProduct, updateProduct, deleteProduct } from '@/app/actions/products';
+import { SupplierDTO } from '@/app/actions/suppliers';
 import { Plus, Search, Edit2, Trash2, X, Loader2, Save, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ConfirmationModal } from '@/app/components/ConfirmationModal';
 
 interface ProductsClientProps {
     initialProducts: ProductDTO[];
+    suppliers: SupplierDTO[];
 }
 
-export function ProductsClient({ initialProducts }: ProductsClientProps) {
+export function ProductsClient({ initialProducts, suppliers }: ProductsClientProps) {
     const [products, setProducts] = useState(initialProducts);
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,8 +26,6 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         (p.productNumber || '').toLowerCase().includes(search.toLowerCase())
     );
-
-
 
     const handleDeleteClick = (id: string) => {
         setDeleteModal({ isOpen: true, id });
@@ -77,6 +77,7 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                             <tr>
                                 <th className="px-3 py-2">Ürün Kodu</th>
                                 <th className="px-3 py-2">Ürün Adı</th>
+                                <th className="px-3 py-2">Tedarikçi</th>
                                 <th className="px-3 py-2 text-right">Fiyat</th>
                                 <th className="px-3 py-2 text-right">Maliyet</th>
                                 <th className="px-3 py-2 w-20">İşlemler</th>
@@ -87,6 +88,7 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                 <tr key={product.id} className="hover:bg-secondary/20 transition-colors h-8">
                                     <td className="px-3 py-1 font-mono text-[10px]">{product.productNumber}</td>
                                     <td className="px-3 py-1 font-medium">{product.name}</td>
+                                    <td className="px-3 py-1 text-muted-foreground">{product.supplierName || '-'}</td>
                                     <td className="px-3 py-1 text-right">
                                         {product.price ? `${product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL` : '-'}
                                     </td>
@@ -112,8 +114,8 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
                                 </tr>
                             ))}
                             {filteredProducts.length === 0 && (
-                                <tr>
-                                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                                <tr key="no-products">
+                                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                                         Ürün bulunamadı.
                                     </td>
                                 </tr>
@@ -126,13 +128,11 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
             {isModalOpen && (
                 <ProductModal
                     product={editingProduct}
+                    suppliers={suppliers}
                     onClose={() => setIsModalOpen(false)}
                     onSuccess={() => {
                         setIsModalOpen(false);
                         router.refresh();
-                        // Note: To fully sync state without full refresh, we'd pass the new product back, 
-                        // but router.refresh() + key update or server refetch is simpler for now.
-                        // Actually, let's just trigger a full page refresh for simplicity for now.
                         window.location.reload();
                     }}
                 />
@@ -153,12 +153,13 @@ export function ProductsClient({ initialProducts }: ProductsClientProps) {
     );
 }
 
-function ProductModal({ product, onClose, onSuccess }: { product: ProductDTO | null, onClose: () => void, onSuccess: () => void }) {
+function ProductModal({ product, suppliers, onClose, onSuccess }: { product: ProductDTO | null, suppliers: SupplierDTO[], onClose: () => void, onSuccess: () => void }) {
     const [name, setName] = useState(product?.name || '');
     const [price, setPrice] = useState(product?.price?.toString() || '');
     const [cost, setCost] = useState(product?.cost?.toString() || '');
     const [productNumber, setProductNumber] = useState(product?.productNumber || '');
     const [description, setDescription] = useState(product?.description || '');
+    const [supplierId, setSupplierId] = useState(product?.supplierId || '');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -167,18 +168,18 @@ function ProductModal({ product, onClose, onSuccess }: { product: ProductDTO | n
 
         const data = {
             name,
-            price: price ? parseFloat(price) : 0, // Ensure strictly number, 0 if empty/invalid
+            price: price ? parseFloat(price) : 0,
             cost: cost ? parseFloat(cost) : 0,
             productNumber: productNumber || undefined,
-            description: description || null
+            description: description || null,
+            supplierId: supplierId || null
         };
 
         let result;
         if (product && product.id) {
-            // For update, productNumber is required (or we pass explicitly what we have)
             result = await updateProduct(product.id, {
                 ...data,
-                productNumber: productNumber || product.productNumber // Fallback shouldn't happen if validation works, but safe
+                productNumber: productNumber || product.productNumber
             });
         } else {
             result = await createProduct(data);
@@ -194,7 +195,7 @@ function ProductModal({ product, onClose, onSuccess }: { product: ProductDTO | n
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-card w-full max-w-md rounded-xl shadow-xl border border-border animate-in fade-in zoom-in duration-200">
+            <div className="bg-card w-full max-w-md rounded-xl shadow-xl border border-border animate-in fade-in zoom-in duration-200 overflow-y-auto max-h-[90vh]">
                 <div className="flex items-center justify-between p-4 border-b border-border">
                     <h3 className="font-semibold text-lg">
                         {product ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle'}
@@ -223,6 +224,19 @@ function ProductModal({ product, onClose, onSuccess }: { product: ProductDTO | n
                             className="w-full px-3 py-2 border border-border rounded-lg bg-secondary/20 focus:ring-2 focus:ring-primary/50 outline-none"
                             required
                         />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium">Tedarikçi</label>
+                        <select
+                            value={supplierId}
+                            onChange={(e) => setSupplierId(e.target.value)}
+                            className="w-full px-3 py-2 border border-border rounded-lg bg-secondary/20 focus:ring-2 focus:ring-primary/50 outline-none"
+                        >
+                            <option value="">Seçiniz...</option>
+                            {suppliers.map(s => (
+                                <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                        </select>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">

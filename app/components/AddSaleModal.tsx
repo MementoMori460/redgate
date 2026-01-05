@@ -1,29 +1,21 @@
 'use client';
 
 import { X } from 'lucide-react';
-import { SaleDTO } from '../actions/sales';
-import { User } from 'next-auth';
-import { EditSaleForm } from './EditSaleForm';
+import { AddSaleForm } from './AddSaleForm';
 
-interface EditSaleModalProps {
-    sale: SaleDTO;
+interface AddSaleModalProps {
     onClose: () => void;
-    user?: User;
+    onSuccess?: () => void;
 }
 
-export function EditSaleModal({ sale, onClose }: EditSaleModalProps) {
+export function AddSaleModal({ onClose, onSuccess }: AddSaleModalProps) {
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-4 sm:p-6 pt-4 sm:pt-6">
             <div className="bg-card w-full max-w-2xl rounded-xl border border-border shadow-2xl flex flex-col max-h-[95dvh] sm:max-h-[90dvh] animate-in fade-in zoom-in-95 duration-200">
                 <div className="px-4 py-3 border-b border-border flex justify-between items-center bg-secondary/5 shrink-0">
                     <div>
                         <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-                            Satış Düzenle
-                            {sale.orderNumber && (
-                                <span className="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5 rounded border border-primary/20 font-mono">
-                                    {sale.orderNumber}
-                                </span>
-                            )}
+                            Yeni Satış Ekle
                         </h2>
                     </div>
                     <button onClick={onClose} className="text-muted-foreground hover:text-foreground hover:bg-secondary/50 p-1 rounded-md transition-colors">
@@ -32,11 +24,14 @@ export function EditSaleModal({ sale, onClose }: EditSaleModalProps) {
                 </div>
 
                 <div className="p-3 md:p-4 overflow-y-auto flex-1 custom-scrollbar">
-                    <EditSaleForm
-                        sale={sale}
+                    <AddSaleForm
                         onSuccess={() => {
-                            window.location.reload();
-                            onClose();
+                            // If parent provided onSuccess, call it. Otherwise just close.
+                            if (onSuccess) {
+                                onSuccess();
+                            } else {
+                                onClose();
+                            }
                         }}
                         onCancel={onClose}
                     />

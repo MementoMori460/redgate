@@ -5,19 +5,19 @@ import { handleSignOut } from '@/app/actions/auth';
 
 export function SignOutButton() {
     return (
-        <div className="p-6 flex items-center justify-between gap-6 group hover:bg-red-500/5 transition-colors">
-            <div className="flex-1 space-y-1">
-                <h3 className="text-base font-medium flex items-center gap-2 text-red-600/90">
-                    <LogOut size={18} />
-                    Oturumu Kapat
+        <div className="flex items-center justify-between gap-4 p-4 rounded-lg border border-red-200 bg-red-50/50 hover:bg-red-50 transition-colors group h-full">
+            <div className="space-y-1">
+                <h3 className="text-sm font-medium flex items-center gap-2 text-red-600">
+                    <LogOut size={16} />
+                    Oturumu Sonlandır
                 </h3>
-                <p className="text-sm text-muted-foreground">Mevcut oturumunuzu sonlandırın.</p>
+                <p className="text-xs text-red-600/70">Mevcut oturumunuzu güvenle kapatın.</p>
             </div>
 
             <form action={handleSignOut}>
                 <button
                     type="submit"
-                    className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors"
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-xs font-medium transition-colors shadow-sm"
                 >
                     Çıkış Yap
                 </button>
