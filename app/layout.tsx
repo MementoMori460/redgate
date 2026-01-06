@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   title: "RedGateSalesTrack 2026 by Memento",
   description: "Advanced Sales Tracking Application",
   icons: {
-    icon: '/redgateicon.png',
-    apple: '/redgateicon.png',
+    icon: '/icon-192.png',
+    apple: '/icon-192.png',
   },
   manifest: "/manifest.json",
 };
