@@ -3,10 +3,10 @@ import { Trash2, User } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
 import { CreateUserForm } from './CreateUserForm';
 import { UserItem } from './UserItem';
+import { UsersExportButton } from './UsersExportButton';
 
 export default async function UsersPage() {
     const users = await getUsers();
-
 
 
     async function handleDeleteUser(formData: FormData) {
@@ -24,10 +24,13 @@ export default async function UsersPage() {
                 {/* User List */}
                 <div className="lg:col-span-2 space-y-4">
                     <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <User className="text-primary" size={20} />
-                            Mevcut Kullanıcılar
-                        </h2>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-lg font-semibold flex items-center gap-2">
+                                <User className="text-primary" size={20} />
+                                Mevcut Kullanıcılar
+                            </h2>
+                            <UsersExportButton users={users} />
+                        </div>
                         <div className="space-y-4">
                             {users.map((user) => (
                                 <UserItem key={user.id} user={user} />

@@ -2,14 +2,16 @@
 
 import React, { useState } from 'react';
 import { createStore, updateStore, deleteStore, StoreDTO } from '../../actions/stores';
-import { Plus, Search, MapPin, Trash2, Edit, X, Building } from 'lucide-react';
+import { Plus, Search, MapPin, Trash2, Edit, X, Building, Download } from 'lucide-react';
 import { ConfirmationModal } from '../../components/ConfirmationModal';
+import { useRole } from '../../contexts/RoleContext';
 
 interface StoresClientProps {
     initialStores: any[];
 }
 
 export function StoresClient({ initialStores }: StoresClientProps) {
+    const { role } = useRole();
     const [stores, setStores] = useState(initialStores);
     const [searchTerm, setSearchTerm] = useState('');
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -23,6 +25,30 @@ export function StoresClient({ initialStores }: StoresClientProps) {
         s.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.city.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const handleExport = () => {
+        if (!filteredStores.length) return;
+
+        const headers = ["Kod", "Mağaza Adı", "Bölge", "Şehir"];
+        const csvContent = [
+            headers.join(','),
+            ...filteredStores.map(s => [
+                `"${s.code}"`,
+                `"${s.name}"`,
+                `"${s.region}"`,
+                `"${s.city}"`
+            ].join(','))
+        ].join('\n');
+
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `magazalar_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     const handleDeleteClick = (id: string) => {
         setDeleteModal({ isOpen: true, id });
@@ -45,17 +71,27 @@ export function StoresClient({ initialStores }: StoresClientProps) {
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-
-                <button
-                    onClick={() => {
-                        setEditingStore(null);
-                        setIsFormOpen(true);
-                    }}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                >
-                    <Plus size={18} />
-                    Yeni Mağaza
-                </button>
+                <div className="flex gap-2 ml-auto">
+                    {role === 'admin' && (
+                        <button
+                            onClick={handleExport}
+                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                        >
+                            <Download size={18} />
+                            İndir
+                        </button>
+                    )}
+                    <button
+                        onClick={() => {
+                            setEditingStore(null);
+                            setIsFormOpen(true);
+                        }}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                    >
+                        <Plus size={18} />
+                        Yeni Mağaza
+                    </button>
+                </div>
             </div>
 
             <div className="bg-card border border-border rounded-xl overflow-hidden">

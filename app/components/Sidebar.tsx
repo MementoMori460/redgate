@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, PlusCircle, Bell, Settings,
   Menu, ChevronLeft, LogOut, Package, Users,
-  Sun, Moon, Receipt, PieChart, ChevronRight, Building, TrendingUp, Archive
+  Sun, Moon, Receipt, PieChart, ChevronRight, Building, TrendingUp, Archive, Truck
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { RoleSwitcher } from './RoleSwitcher';
@@ -31,7 +31,9 @@ const navItems = [
   { name: 'Ürünler', href: '/admin/products', icon: Package, roles: ['admin'] },
   { name: 'Tedarikçiler', href: '/suppliers', icon: Archive, roles: ['admin'] },
   { name: 'Bekleyen Siparişler', href: '/admin/orders', icon: Package, roles: ['admin', 'manager', 'warehouse'] },
-  { name: 'Ayarlar', href: '/settings', icon: Settings, roles: ['admin', 'manager', 'sales', 'warehouse', 'accountant', 'customer'] },
+  { name: 'Ayarlar', href: '/settings', icon: Settings, roles: ['admin', 'manager', 'sales', 'warehouse', 'accountant', 'customer', 'supplier'] },
+  { name: 'Ürünlerim', href: '/supplier/products', icon: Package, roles: ['supplier'] },
+  { name: 'Siparişlerim', href: '/supplier/orders', icon: Truck, roles: ['supplier'] },
 ];
 
 export function Sidebar() {

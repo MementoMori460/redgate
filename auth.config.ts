@@ -26,6 +26,7 @@ export const authConfig = {
                 token.role = user.role;
                 token.id = user.id;
                 token.name = user.name;
+                token.supplierId = user.supplierId;
             }
             return token;
         },
@@ -34,6 +35,7 @@ export const authConfig = {
                 session.user.role = token.role as string;
                 session.user.id = token.id as string;
                 session.user.name = token.name as string;
+                session.user.supplierId = token.supplierId as string | null | undefined;
             }
             return session;
         },

@@ -2,8 +2,9 @@
 
 import React, { useState, useRef } from 'react';
 import { createCustomer, deleteCustomer, updateCustomer, CustomerDTO, importCustomersFromExcel } from '../../actions/customers';
-import { Plus, Upload, Search, MoreHorizontal, Building2, MapPin, Trash2, Edit } from 'lucide-react';
+import { Plus, Upload, Search, MoreHorizontal, Building2, MapPin, Trash2, Edit, Download } from 'lucide-react';
 import { ConfirmationModal } from '@/app/components/ConfirmationModal';
+import { useRole } from '../../contexts/RoleContext';
 
 interface CustomersClientProps {
     initialCustomers: any[];
@@ -11,6 +12,7 @@ interface CustomersClientProps {
 
 export function CustomersClient({ initialCustomers }: CustomersClientProps) {
     const [customers, setCustomers] = useState(initialCustomers);
+    const { role } = useRole();
     const [isLoading, setIsLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -25,6 +27,32 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
 
     // Hidden file input ref (moved file reading logic to after confirm)
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleExport = () => {
+        if (!filteredCustomers.length) return;
+
+        const headers = ["Müşteri Adı", "Şehir", "İletişim/Unvan", "Telefon", "E-posta", "Mağaza Kodu"];
+        const csvContent = [
+            headers.join(','),
+            ...filteredCustomers.map(c => [
+                `"${c.name}"`,
+                `"${c.city || ''}"`,
+                `"${c.contactName || ''}"`,
+                `"${c.phone || ''}"`,
+                `"${c.email || ''}"`,
+                `"${c.storeCode || ''}"`
+            ].join(','))
+        ].join('\n');
+
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `musteriler_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     const handleImportClick = () => {
         setImportConfirmOpen(true);
@@ -110,14 +138,25 @@ export function CustomersClient({ initialCustomers }: CustomersClientProps) {
                         accept=".xlsx,.xls,.csv"
                         onChange={handleFileChange}
                     />
-                    <button
-                        onClick={handleImportClick}
-                        disabled={isLoading}
-                        className="bg-secondary hover:bg-secondary/80 text-foreground px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-                    >
-                        <Upload size={18} />
-                        {isLoading ? 'Yükleniyor...' : 'Excel\'den Aktar'}
-                    </button>
+                    {role === 'admin' && (
+                        <>
+                            <button
+                                onClick={handleExport}
+                                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                            >
+                                <Download size={18} />
+                                İndir
+                            </button>
+                            <button
+                                onClick={handleImportClick}
+                                disabled={isLoading}
+                                className="bg-secondary hover:bg-secondary/80 text-foreground px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                            >
+                                <Upload size={18} />
+                                {isLoading ? 'Yükleniyor...' : 'Excel\'den Aktar'}
+                            </button>
+                        </>
+                    )}
                     <button
                         onClick={() => {
                             setEditingCustomer(null);

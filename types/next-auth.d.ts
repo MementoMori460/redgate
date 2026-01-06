@@ -10,6 +10,7 @@ declare module "next-auth" {
             role: string
             id: string
             name: string
+            supplierId?: string | null
         } & DefaultSession["user"]
     }
 
@@ -17,6 +18,7 @@ declare module "next-auth" {
         role: string
         id: string
         name: string
+        supplierId?: string | null
     }
 }
 
@@ -25,5 +27,6 @@ declare module "next-auth/jwt" {
         role: string
         id: string
         name: string
+        supplierId?: string | null
     }
 }

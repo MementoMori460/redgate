@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { SupplierDTO, createSupplier, updateSupplier, deleteSupplier, getSupplierProducts } from '../actions/suppliers';
 import { useRole } from '../contexts/RoleContext';
-import { Plus, Search, Edit, Trash2, Phone, Mail, User, List, X } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, List, X, Download } from 'lucide-react';
 
 interface SuppliersClientProps {
     initialSuppliers: SupplierDTO[];
@@ -32,6 +32,31 @@ export default function SuppliersClient({ initialSuppliers }: SuppliersClientPro
         s.name.toLowerCase().includes(search.toLowerCase()) ||
         (s.contactName && s.contactName.toLowerCase().includes(search.toLowerCase()))
     );
+
+    const handleExport = () => {
+        if (!filteredSuppliers.length) return;
+
+        const headers = ["Tedarikçi Adı", "İlgili Kişi", "Telefon", "E-posta", "Ürün Sayısı"];
+        const csvContent = [
+            headers.join(','),
+            ...filteredSuppliers.map(s => [
+                `"${s.name}"`,
+                `"${s.contactName || ''}"`,
+                `"${s.phone || ''}"`,
+                `"${s.email || ''}"`,
+                `"${s.productCount || 0}"`
+            ].join(','))
+        ].join('\n');
+
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `tedarikciler_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     const handleOpenModal = (supplier?: SupplierDTO) => {
         if (supplier) {
@@ -104,12 +129,22 @@ export default function SuppliersClient({ initialSuppliers }: SuppliersClientPro
                         {filteredSuppliers.length}
                     </span>
                 </h1>
-                <button
-                    onClick={() => handleOpenModal()}
-                    className="flex items-center gap-1 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-                >
-                    <Plus size={16} /> Yeni Ekle
-                </button>
+                <div className="flex gap-2">
+                    {role === 'admin' && (
+                        <button
+                            onClick={handleExport}
+                            className="flex items-center gap-1 bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
+                        >
+                            <Download size={16} /> İndir
+                        </button>
+                    )}
+                    <button
+                        onClick={() => handleOpenModal()}
+                        className="flex items-center gap-1 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                    >
+                        <Plus size={16} /> Yeni Ekle
+                    </button>
+                </div>
             </div>
 
             {/* Search */}

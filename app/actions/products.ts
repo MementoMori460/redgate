@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { Prisma } from "@prisma/client"
+import { auth } from "@/auth"
 
 export type ProductDTO = {
     id?: string
@@ -15,16 +16,31 @@ export type ProductDTO = {
     supplierName?: string | null
 }
 
-export async function getProducts() {
+export async function getProducts(supplierIdFilter?: string) {
     try {
+        const session = await auth();
+        const role = session?.user?.role;
+        const userSupplierId = session?.user?.supplierId;
+
+        let whereClause: any = {};
+
+        if (role === 'supplier') {
+            if (!userSupplierId) return [];
+            whereClause.supplierId = userSupplierId;
+        } else if (supplierIdFilter) {
+            whereClause.supplierId = supplierIdFilter;
+        }
+
         const products = await prisma.product.findMany({
+            where: whereClause,
             orderBy: { name: 'asc' },
             include: { supplier: true }
         })
+
         return products.map(p => ({
             ...p,
-            price: p.price ? p.price.toNumber() : 0,
-            cost: p.cost ? p.cost.toNumber() : 0,
+            price: (role === 'supplier') ? 0 : (p.price ? p.price.toNumber() : 0),
+            cost: (role === 'supplier') ? 0 : (p.cost ? p.cost.toNumber() : 0),
             productNumber: p.productNumber || '', // Ensure string
             description: p.description,
             supplierId: p.supplierId,

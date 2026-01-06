@@ -207,6 +207,36 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
     const totalRevenue = filteredSales.reduce((sum, sale) => sum + sale.total, 0);
     const totalProfit = filteredSales.reduce((sum, sale) => sum + sale.profit, 0);
 
+    const handleExport = () => {
+        if (!filteredSales.length) return;
+
+        const headers = ["Tarih", "Sipariş No", "Mağaza", "Müşteri", "Ürün", "Adet", "Tutar", "Kar", "Ödeme", "Durum"];
+        const csvContent = [
+            headers.join(','),
+            ...filteredSales.map(s => [
+                `"${new Date(s.date).toLocaleDateString('tr-TR')}"`,
+                `"${s.orderNumber || ''}"`,
+                `"${s.storeName}"`,
+                `"${s.customerName || ''}"`,
+                `"${s.item.replace(/"/g, '""')}"`,
+                `"${s.quantity}"`,
+                `"${s.total}"`,
+                `"${s.profit}"`,
+                `"${s.paymentStatus === 'PAID' ? 'Ödendi' : 'Bekliyor'}"`,
+                `"${s.isShipped ? 'Kargolandı' : 'Sipariş'}"`
+            ].join(','))
+        ].join('\n');
+
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `satislar_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     // Target Calculations
     const progress = monthlyTarget.target > 0 ? (totalRevenue / monthlyTarget.target) * 100 : 0;
     const remaining = Math.max(0, monthlyTarget.target - totalRevenue);
@@ -263,6 +293,17 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
                                 <option key={r} value={r}>{r}</option>
                             ))}
                         </select>
+                    )}
+
+                    {role === 'admin' && (
+                        <button
+                            onClick={handleExport}
+                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors h-[34px]"
+                            title="Excel/CSV İndir"
+                        >
+                            <Download size={14} />
+                            İndir
+                        </button>
                     )}
                 </div>
             </div>

@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { ProductDTO, createProduct, updateProduct, deleteProduct } from '@/app/actions/products';
 import { SupplierDTO } from '@/app/actions/suppliers';
-import { Plus, Search, Edit2, Trash2, X, Loader2, Save, RefreshCw } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Loader2, Save, RefreshCw, Download } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ConfirmationModal } from '@/app/components/ConfirmationModal';
+import { useRole } from '@/app/contexts/RoleContext';
 
 interface ProductsClientProps {
     initialProducts: ProductDTO[];
@@ -13,6 +14,7 @@ interface ProductsClientProps {
 }
 
 export function ProductsClient({ initialProducts, suppliers }: ProductsClientProps) {
+    const { role } = useRole();
     const [products, setProducts] = useState(initialProducts);
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,6 +28,32 @@ export function ProductsClient({ initialProducts, suppliers }: ProductsClientPro
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         (p.productNumber || '').toLowerCase().includes(search.toLowerCase())
     );
+
+    const handleExport = () => {
+        if (!filteredProducts.length) return;
+
+        const headers = ["Ürün Kodu", "Ürün Adı", "Tedarikçi", "Fiyat", "Maliyet", "Açıklama"];
+        const csvContent = [
+            headers.join(','),
+            ...filteredProducts.map(p => [
+                `"${p.productNumber || ''}"`,
+                `"${p.name}"`,
+                `"${p.supplierName || ''}"`,
+                `"${p.price || 0}"`,
+                `"${p.cost || 0}"`,
+                `"${p.description || ''}"`
+            ].join(','))
+        ].join('\n');
+
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `urunler_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     const handleDeleteClick = (id: string) => {
         setDeleteModal({ isOpen: true, id });
@@ -60,6 +88,15 @@ export function ProductsClient({ initialProducts, suppliers }: ProductsClientPro
                     />
                 </div>
                 <div className="flex gap-2">
+                    {role === 'admin' && (
+                        <button
+                            onClick={handleExport}
+                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
+                        >
+                            <Download size={18} />
+                            İndir
+                        </button>
+                    )}
                     <button
                         onClick={() => { setEditingProduct(null); setIsModalOpen(true); }}
                         className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"

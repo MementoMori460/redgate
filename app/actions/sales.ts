@@ -606,3 +606,56 @@ export async function checkAndCleanupOldOrders() {
         return { count: 0, message: 'Error' };
     }
 }
+
+export async function getSupplierOrders() {
+    try {
+        const session = await auth();
+        if (!session?.user) return [];
+
+        const role = session.user.role;
+        const userSupplierId = session.user.supplierId;
+
+        if (role !== 'supplier' || !userSupplierId) {
+            return [];
+        }
+
+        // 1. Get My Products
+        const myProducts = await prisma.product.findMany({
+            where: { supplierId: userSupplierId },
+            select: { name: true }
+        });
+
+        const productNames = myProducts.map(p => p.name);
+
+        if (productNames.length === 0) return [];
+
+        // 2. Get Sales for these products
+        const orders = await prisma.sale.findMany({
+            where: {
+                item: { in: productNames },
+                deletedAt: null
+            },
+            orderBy: { date: 'desc' }
+        });
+
+        // 3. Mask financials
+        return orders.map(sale => ({
+            ...sale,
+            date: sale.date.toISOString().split('T')[0],
+            createdAt: sale.createdAt.toISOString(),
+            updatedAt: sale.updatedAt.toISOString(),
+            customerName: sale.customerName || '',
+            price: 0, // Hidden
+            total: 0, // Hidden
+            profit: 0, // Hidden
+            status: sale.status,
+            description: sale.description || '',
+            waybillNumber: sale.waybillNumber || '',
+            orderNumber: sale.orderNumber || ''
+        }));
+
+    } catch (error) {
+        console.error("Failed to fetch supplier orders:", error);
+        return [];
+    }
+}
