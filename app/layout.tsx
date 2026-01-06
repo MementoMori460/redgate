@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   description: "Advanced Sales Tracking Application",
   icons: {
     icon: '/redgateicon.png',
+    apple: '/redgateicon.png',
   },
   manifest: "/manifest.json",
 };
