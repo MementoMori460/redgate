@@ -69,6 +69,7 @@ model User {
   password  String
   name      String
   role      String
+  email     String?  @unique
   supplierId String?
   supplier  Supplier? @relation(fields: [supplierId], references: [id])
   createdAt DateTime @default(now())

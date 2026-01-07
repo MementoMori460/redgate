@@ -20,16 +20,21 @@ export async function getUsers() {
     }
 }
 
-export async function createUser(firstName: string, username: string, role: string, password: string) {
+export async function createUser(data: { name: string, username: string, role: string, password?: string, email?: string }) {
     try {
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = data.password ? await bcrypt.hash(data.password, 10) : undefined;
+        // If no password provided for new user, maybe default or error? 
+        // For new user password is usually required. 
+        // Let's assume passed password is required for create.
+        if (!data.password) throw new Error("Password required");
 
         await prisma.user.create({
             data: {
-                name: firstName,
-                username,
-                role,
-                password: hashedPassword,
+                name: data.name,
+                username: data.username,
+                role: data.role,
+                password: await bcrypt.hash(data.password, 10),
+                email: data.email,
             }
         });
 
@@ -38,6 +43,25 @@ export async function createUser(firstName: string, username: string, role: stri
     } catch (error) {
         console.error("Failed to create user:", error);
         return { success: false, error: "Kullanıcı oluşturulamadı." };
+    }
+}
+
+export async function updateUser(id: string, data: { name: string, username: string, role: string, email?: string }) {
+    try {
+        await prisma.user.update({
+            where: { id },
+            data: {
+                name: data.name,
+                username: data.username,
+                role: data.role,
+                email: data.email
+            }
+        });
+        revalidatePath('/admin/users');
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to update user:", error);
+        return { success: false, error: "Kullanıcı güncellenemedi." };
     }
 }
 
