@@ -265,7 +265,7 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
                         <Search className="absolute left-2.5 top-2.5 md:top-2 text-muted-foreground" size={14} />
                     </div>
                     {showSuggestions && filteredStores.length > 0 && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded shadow-lg max-h-56 overflow-y-auto z-50 custom-scrollbar">
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded shadow-lg max-h-56 overflow-y-auto z-50 custom-scrollbar">
                             {filteredStores.map(store => (
                                 <div
                                     key={store.code}
@@ -339,7 +339,7 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
                             <UserIcon className="absolute left-2.5 top-2.5 md:top-2 text-muted-foreground" size={14} />
                         </div>
                         {showCustomerSuggestions && filteredCustomers.length > 0 && (
-                            <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded shadow-lg max-h-40 overflow-y-auto z-50">
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded shadow-lg max-h-40 overflow-y-auto z-50">
                                 {filteredCustomers.map((c, i) => (
                                     <div key={i} onClick={() => selectCustomer(c)} className="px-3 py-2 hover:bg-accent cursor-pointer text-[10px] font-medium">
                                         <div className="font-medium">{c.name}</div>
@@ -372,7 +372,7 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
                             <select
                                 value={salesPerson}
                                 onChange={(e) => setSalesPerson(e.target.value)}
-                                className="w-full h-9 md:h-8 bg-background border border-border rounded px-2 text-xs focus:ring-1 focus:ring-primary outline-none appearance-none"
+                                className="w-full h-9 md:h-8 bg-card border border-border rounded px-2 text-xs focus:ring-1 focus:ring-primary outline-none appearance-none"
                             >
                                 <option value="">Personel Seç...</option>
                                 {salesPersons.map(p => (
@@ -410,7 +410,7 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
                             <Package className="absolute left-2.5 top-2.5 md:top-2 text-muted-foreground" size={14} />
                         </div>
                         {showProductSuggestions && filteredProducts.length > 0 && (
-                            <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded shadow-lg max-h-56 overflow-y-auto z-50 custom-scrollbar">
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded shadow-lg max-h-56 overflow-y-auto z-50 custom-scrollbar">
                                 {filteredProducts.map(p => (
                                     <div key={p.id} onClick={() => selectProduct(p)} className="px-3 py-2 hover:bg-accent cursor-pointer border-b border-border/50 last:border-0">
                                         <div className="flex justify-between items-center">
@@ -521,7 +521,7 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
                         <select
                             value={isShipped ? 'true' : 'false'}
                             onChange={(e) => setIsShipped(e.target.value === 'true')}
-                            className="w-full h-[36px] md:h-[30px] bg-background border border-border rounded px-1 text-[10px] outline-none"
+                            className="w-full h-[36px] md:h-[30px] bg-card border border-border rounded px-1 text-[10px] outline-none"
                         >
                             <option value="false">🔴 Bekliyor</option>
                             <option value="true">🟢 Kargolandı</option>
@@ -529,7 +529,7 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
                         <select
                             value={paymentStatus}
                             onChange={(e) => setPaymentStatus(e.target.value)}
-                            className="w-full h-[36px] md:h-[30px] bg-background border border-border rounded px-1 text-[10px] outline-none"
+                            className="w-full h-[36px] md:h-[30px] bg-card border border-border rounded px-1 text-[10px] outline-none"
                         >
                             <option value="UNPAID">⚪️ Ödenmedi</option>
                             <option value="PAID">🟢 Ödendi</option>
