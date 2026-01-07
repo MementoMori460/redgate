@@ -342,29 +342,29 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
 
 
             {/* Table */}
-            <div className="bg-card border border-border/50 rounded-lg overflow-hidden shadow-none -mt-1 ring-1 ring-border/30">
+            <div className="bg-card border border-border rounded-lg overflow-hidden shadow-none -mt-1 ring-1 ring-border">
                 <div className="overflow-x-auto">
                     <table className="w-full text-[11px] compact-table">
-                        <thead className="bg-secondary/30 text-[10px] uppercase text-muted-foreground font-medium border-b border-border/50">
+                        <thead className="bg-secondary/30 text-[10px] uppercase text-muted-foreground font-medium border-b border-border">
                             <tr>
-                                <th className="px-2 py-1 text-left w-[80px]">Tarih</th>
-                                <th className="px-2 py-1 text-left w-[110px]">Sipariş No</th>
-                                {role !== 'customer' && <th className="px-2 py-1 text-left w-[120px]">Mağaza</th>}
-                                <th className="px-2 py-1 text-left w-[120px]">Müşteri</th>
-                                <th className="px-2 py-1 text-left">Ürün</th>
+                                <th className="px-2 py-1 text-left w-[80px] border-r border-border">Tarih</th>
+                                <th className="px-2 py-1 text-left w-[110px] border-r border-border">Sipariş No</th>
+                                {role !== 'customer' && <th className="px-2 py-1 text-left w-[120px] border-r border-border">Mağaza</th>}
+                                <th className="px-2 py-1 text-left w-[120px] border-r border-border">Müşteri</th>
+                                <th className="px-2 py-1 text-left border-r border-border">Ürün</th>
                                 {role !== 'warehouse' && (
                                     <>
-                                        <th className="px-2 py-1 text-right w-[50px]">Adet</th>
-                                        <th className="px-2 py-1 text-right w-[80px]">Tutar</th>
+                                        <th className="px-2 py-1 text-right w-[50px] border-r border-border">Adet</th>
+                                        <th className="px-2 py-1 text-right w-[80px] border-r border-border">Tutar</th>
                                     </>
                                 )}
-                                {showProfit && <th className="px-2 py-1 text-right w-[80px]">Kar</th>}
-                                {role !== 'customer' && <th className="px-2 py-1 text-center w-[90px]">Ödeme</th>}
-                                <th className="px-2 py-1 text-center w-[90px]">Durum</th>
+                                {showProfit && <th className="px-2 py-1 text-right w-[80px] border-r border-border">Kar</th>}
+                                {role !== 'customer' && <th className="px-2 py-1 text-center w-[90px] border-r border-border">Ödeme</th>}
+                                <th className="px-2 py-1 text-center w-[90px] border-r border-border">Durum</th>
                                 {role !== 'customer' && <th className="px-2 py-1 text-right w-[80px]">İşlem</th>}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border/30">
+                        <tbody className="divide-y divide-border">
                             {filteredSales.map((sale) => {
                                 const saleDate = new Date(sale.date);
                                 const now = new Date();
@@ -376,7 +376,7 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
                                     <tr
                                         key={sale.id}
                                         className={clsx(
-                                            "transition-colors group h-8 cursor-pointer border-b border-border/30 last:border-0",
+                                            "transition-colors group h-8 cursor-pointer border-b border-border last:border-0",
                                             isDelayed ? "bg-red-500/10 hover:bg-red-500/20" : "hover:bg-secondary/20"
                                         )}
                                         onClick={() => {
@@ -385,38 +385,38 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
                                             }
                                         }}
                                     >
-                                        <td className="px-2 py-0.5 whitespace-nowrap text-muted-foreground">
+                                        <td className="px-2 py-0.5 whitespace-nowrap text-muted-foreground border-r border-border">
                                             {new Date(sale.date).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' })}
                                         </td>
-                                        <td className="px-2 py-0.5 whitespace-nowrap font-mono text-xs text-muted-foreground">
+                                        <td className="px-2 py-0.5 whitespace-nowrap font-mono text-xs text-muted-foreground border-r border-border">
                                             {sale.orderNumber || '-'}
                                         </td>
                                         {role !== 'customer' && (
-                                            <td className="px-2 py-0.5 font-medium text-foreground truncate max-w-[120px]" title={sale.storeName}>
+                                            <td className="px-2 py-0.5 font-medium text-foreground truncate max-w-[120px] border-r border-border" title={sale.storeName}>
                                                 {sale.storeName}
                                             </td>
                                         )}
-                                        <td className="px-2 py-0.5 truncate max-w-[120px]" title={sale.customerName || '-'}>
+                                        <td className="px-2 py-0.5 truncate max-w-[120px] border-r border-border" title={sale.customerName || '-'}>
                                             {sale.customerName || <span className="text-muted-foreground/50">-</span>}
                                         </td>
-                                        <td className="px-2 py-0.5 truncate max-w-[200px]" title={sale.item}>
+                                        <td className="px-2 py-0.5 truncate max-w-[200px] border-r border-border" title={sale.item}>
                                             {sale.item}
                                         </td>
                                         {role !== 'warehouse' && (
                                             <>
-                                                <td className="px-2 py-0.5 text-right">{sale.quantity}</td>
-                                                <td className="px-2 py-0.5 text-right font-medium">
+                                                <td className="px-2 py-0.5 text-right border-r border-border">{sale.quantity}</td>
+                                                <td className="px-2 py-0.5 text-right font-medium border-r border-border">
                                                     {Number(sale.total).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺
                                                 </td>
                                             </>
                                         )}
                                         {showProfit && (
-                                            <td className="px-2 py-0.5 text-right text-green-600/90">
+                                            <td className="px-2 py-0.5 text-right text-green-600/90 border-r border-border">
                                                 {Number(sale.profit).toLocaleString('tr-TR', { maximumFractionDigits: 0 })} ₺
                                             </td>
                                         )}
                                         {role !== 'customer' && (
-                                            <td className="px-2 py-0.5 text-center">
+                                            <td className="px-2 py-0.5 text-center border-r border-border">
                                                 <span className={clsx(
                                                     "inline-flex items-center px-1 py-0 rounded text-[9px] font-medium border leading-none",
                                                     sale.paymentStatus === 'PAID'
@@ -427,7 +427,7 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
                                                 </span>
                                             </td>
                                         )}
-                                        <td className="px-2 py-0.5 text-center flex justify-center items-center gap-1 h-full">
+                                        <td className="px-2 py-0.5 text-center flex justify-center items-center gap-1 h-full border-r border-border">
                                             <span className={clsx(
                                                 "inline-flex items-center px-1 py-0 rounded text-[9px] font-medium border leading-none",
                                                 sale.isShipped
