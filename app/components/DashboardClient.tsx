@@ -31,6 +31,8 @@ export function DashboardClient({ sales, user, targetRevenue, lateShipmentCount 
     useEffect(() => {
         if (role === 'customer') {
             router.push('/customer/order');
+        } else if (role === 'supplier') {
+            router.push('/supplier/products');
         }
     }, [role, router]);
 

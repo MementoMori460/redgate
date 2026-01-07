@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRole, UserRole } from '../contexts/RoleContext';
-import { Shield, Users, Package, UserCog, ChevronDown, ChevronRight } from 'lucide-react';
+import { Shield, Users, Package, UserCog, ChevronDown, ChevronRight, Truck } from 'lucide-react';
 import { clsx } from 'clsx';
 
 export function RoleSwitcher() {
@@ -15,6 +15,7 @@ export function RoleSwitcher() {
         { id: 'warehouse', label: 'Depo Sorumlusu', icon: Package },
         { id: 'accountant', label: 'Muhasebeci', icon: UserCog },
         { id: 'customer', label: 'Müşteri (Demo)', icon: Users },
+        { id: 'supplier', label: 'Tedarikçi (Demo)', icon: Truck },
     ];
 
     return (
