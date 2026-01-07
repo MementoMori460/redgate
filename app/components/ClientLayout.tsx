@@ -16,7 +16,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 className="flex-1 flex flex-col bg-background transition-all duration-300 ease-in-out"
             >
                 <Topbar />
-                <div className="p-6 max-w-7xl mx-auto w-full">
+                <div className="p-6 max-w-full mx-auto w-full">
                     {children}
                 </div>
             </main>
