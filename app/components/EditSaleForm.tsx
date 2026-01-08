@@ -6,6 +6,7 @@ import { updateSale, getStores, getCustomers, SaleDTO } from '../actions/sales';
 import { User } from 'next-auth';
 import { getUsers } from '../actions/users';
 import { getProducts, ProductDTO } from '../actions/products';
+import { useRole } from '../contexts/RoleContext';
 
 interface EditSaleFormProps {
     sale: SaleDTO;
@@ -33,6 +34,7 @@ type Customer = {
 };
 
 export function EditSaleForm({ sale, onSuccess, onCancel }: EditSaleFormProps) {
+    const { role } = useRole();
     const [quantity, setQuantity] = useState<number>(sale.quantity);
     const [unitPrice, setUnitPrice] = useState<number>(sale.price);
     const [cost, setCost] = useState<number>(sale.total - sale.profit);
@@ -425,16 +427,18 @@ export function EditSaleForm({ sale, onSuccess, onCancel }: EditSaleFormProps) {
                                 className="w-full h-9 md:h-8 bg-background border border-border rounded px-2 text-xs text-center focus:ring-1 focus:ring-primary outline-none"
                             />
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-semibold text-muted-foreground">Maliyet</label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                value={cost}
-                                onChange={(e) => setCost(Number(e.target.value))}
-                                className="w-full h-9 md:h-8 bg-background border border-border rounded px-2 text-xs text-right focus:ring-1 focus:ring-primary outline-none"
-                            />
-                        </div>
+                        {role !== 'sales' && (
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-semibold text-muted-foreground">Maliyet</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={cost}
+                                    onChange={(e) => setCost(Number(e.target.value))}
+                                    className="w-full h-9 md:h-8 bg-background border border-border rounded px-2 text-xs text-right focus:ring-1 focus:ring-primary outline-none"
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -448,12 +452,14 @@ export function EditSaleForm({ sale, onSuccess, onCancel }: EditSaleFormProps) {
                             {totalPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
                         </span>
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-[9px] text-muted-foreground uppercase font-semibold">Hesaplanan Kar</span>
-                        <span className={`text-sm font-bold font-mono ${netProfit >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                            {netProfit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
-                        </span>
-                    </div>
+                    {role !== 'sales' && (
+                        <div className="flex flex-col">
+                            <span className="text-[9px] text-muted-foreground uppercase font-semibold">Hesaplanan Kar</span>
+                            <span className={`text-sm font-bold font-mono ${netProfit >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                {netProfit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
+                            </span>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -466,8 +472,10 @@ export function EditSaleForm({ sale, onSuccess, onCancel }: EditSaleFormProps) {
                             type="text"
                             value={waybillNumber}
                             onChange={(e) => setWaybillNumber(e.target.value)}
-                            className="w-full h-9 md:h-8 bg-background border border-border rounded px-2 text-xs focus:ring-1 focus:ring-primary outline-none"
+                            className="w-full h-9 md:h-8 bg-background border border-border rounded px-2 text-xs focus:ring-1 focus:ring-primary outline-none disabled:opacity-50 disabled:bg-secondary/20"
                             placeholder="-"
+                            readOnly={role === 'sales'}
+                            disabled={role === 'sales'}
                         />
                     </div>
                     <div className="space-y-1">
@@ -476,8 +484,10 @@ export function EditSaleForm({ sale, onSuccess, onCancel }: EditSaleFormProps) {
                             type="text"
                             value={invoiceNumber}
                             onChange={(e) => setInvoiceNumber(e.target.value)}
-                            className="w-full h-9 md:h-8 bg-background border border-border rounded px-2 text-xs focus:ring-1 focus:ring-primary outline-none"
+                            className="w-full h-9 md:h-8 bg-background border border-border rounded px-2 text-xs focus:ring-1 focus:ring-primary outline-none disabled:opacity-50 disabled:bg-secondary/20"
                             placeholder="-"
+                            readOnly={role === 'sales'}
+                            disabled={role === 'sales'}
                         />
                     </div>
                 </div>
@@ -487,7 +497,8 @@ export function EditSaleForm({ sale, onSuccess, onCancel }: EditSaleFormProps) {
                         <select
                             value={isShipped ? 'true' : 'false'}
                             onChange={(e) => setIsShipped(e.target.value === 'true')}
-                            className="w-full h-[36px] md:h-[30px] bg-background border border-border rounded px-1 text-[10px] outline-none"
+                            className="w-full h-[36px] md:h-[30px] bg-background border border-border rounded px-1 text-[10px] outline-none disabled:opacity-50 disabled:bg-secondary/20"
+                            disabled={role === 'sales'}
                         >
                             <option value="false">🔴 Bekliyor</option>
                             <option value="true">🟢 Kargolandı</option>
@@ -495,7 +506,8 @@ export function EditSaleForm({ sale, onSuccess, onCancel }: EditSaleFormProps) {
                         <select
                             value={paymentStatus}
                             onChange={(e) => setPaymentStatus(e.target.value)}
-                            className="w-full h-[36px] md:h-[30px] bg-background border border-border rounded px-1 text-[10px] outline-none"
+                            className="w-full h-[36px] md:h-[30px] bg-background border border-border rounded px-1 text-[10px] outline-none disabled:opacity-50 disabled:bg-secondary/20"
+                            disabled={role === 'sales'}
                         >
                             <option value="UNPAID">⚪️ Ödenmedi</option>
                             <option value="PAID">🟢 Ödendi</option>

@@ -4,7 +4,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect, useTransition } from 'react';
 import { SaleDTO, deleteSale, shipSale, markSaleAsPaid } from '../actions/sales';
 // Modals removed
-import { Search, Calendar, Filter, ArrowRight, ArrowLeft, MoreHorizontal, Download, Truck, CreditCard, FileText, Trash2, Edit, TrendingUp, Plus } from 'lucide-react';
+import { Search, Calendar, Filter, ArrowRight, ArrowLeft, MoreHorizontal, Download, Truck, CreditCard, FileText, Trash2, Edit, TrendingUp, Plus, StickyNote } from 'lucide-react';
 import { useRole } from '../contexts/RoleContext';
 import { clsx } from "clsx";
 
@@ -67,6 +67,17 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
     const [saleToDelete, setSaleToDelete] = useState<SaleDTO | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
+
+    // Note View Action
+    const [viewNoteOpen, setViewNoteOpen] = useState(false);
+    const [selectedNote, setSelectedNote] = useState<string | null>(null);
+    const [selectedSaleItemForNote, setSelectedSaleItemForNote] = useState<string | null>(null);
+
+    const handleViewNote = (note: string, item: string) => {
+        setSelectedNote(note);
+        setSelectedSaleItemForNote(item);
+        setViewNoteOpen(true);
+    };
 
     const handleShipClick = (sale: SaleDTO) => {
         setSelectedSaleForShip(sale);
@@ -400,7 +411,21 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
                                             {sale.customerName || <span className="text-muted-foreground/50">-</span>}
                                         </td>
                                         <td className="px-2 py-0.5 truncate max-w-[200px] border-r border-border" title={sale.item}>
-                                            {sale.item}
+                                            <div className="flex items-center gap-1">
+                                                <span className="truncate">{sale.item}</span>
+                                                {sale.description && (
+                                                    <div
+                                                        className="group relative cursor-pointer"
+                                                        title={sale.description}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleViewNote(sale.description!, sale.item);
+                                                        }}
+                                                    >
+                                                        <StickyNote size={12} className="text-yellow-600/80 shrink-0 hover:text-yellow-700" />
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
                                         {role !== 'warehouse' && (
                                             <>
@@ -681,6 +706,33 @@ export function SalesHistoryClient({ initialSales, initialDate }: SalesHistoryCl
                                 className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                             >
                                 {isDeleting ? 'Siliniyor...' : 'Sil'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Note View Modal */}
+            {viewNoteOpen && selectedNote && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setViewNoteOpen(false)}>
+                    <div className="bg-card w-full max-w-sm rounded-xl border border-border shadow-2xl p-6 space-y-4" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-lg font-bold flex items-center gap-2">
+                                <StickyNote className="text-yellow-600" /> Not Detayı
+                            </h3>
+                            <button onClick={() => setViewNoteOpen(false)} className="text-muted-foreground hover:text-foreground">X</button>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground font-medium">Ürün: {selectedSaleItemForNote}</p>
+                            <div className="bg-secondary/30 p-3 rounded-lg border border-border/50 text-sm leading-relaxed whitespace-pre-wrap">
+                                {selectedNote}
+                            </div>
+                        </div>
+                        <div className="flex justify-end pt-2">
+                            <button
+                                onClick={() => setViewNoteOpen(false)}
+                                className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                            >
+                                Kapat
                             </button>
                         </div>
                     </div>

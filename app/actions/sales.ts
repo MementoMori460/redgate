@@ -56,10 +56,10 @@ export async function getSales(month?: number, year?: number) {
             lt: endDate
         };
 
-        // SALES role sees only their own sales
-        if (role === 'sales') {
-            whereClause.salesPerson = name;
-        }
+        // SALES role sees all sales now (Requested by user)
+        // if (role === 'sales') {
+        //     whereClause.salesPerson = name;
+        // }
 
         // CUSTOMER role sees only their own orders
         if (role === 'customer') {
@@ -108,7 +108,12 @@ export async function getSaleById(id: string) {
 
         if (!sale) return null;
 
+        const session = await auth();
+        const role = session?.user?.role?.toLowerCase();
+
         // Convert Decimal and Date
+        const canSeeProfit = role === 'admin' || role === 'accountant';
+
         return {
             ...sale,
             date: sale.date.toISOString().split('T')[0],
@@ -118,7 +123,7 @@ export async function getSaleById(id: string) {
             customerContact: sale.customerContact || '',
             price: sale.price.toNumber(),
             total: sale.total.toNumber(),
-            profit: sale.profit.toNumber(),
+            profit: canSeeProfit ? sale.profit.toNumber() : 0,
             status: sale.status,
             description: sale.description || '',
             waybillNumber: sale.waybillNumber || '',
@@ -451,6 +456,35 @@ export async function shipSale(id: string, shippedQuantity: number, waybillNumbe
 
             // 2. Create new record for the REMAINING portion
             const remainingQty = sale.quantity - shippedQuantity;
+
+            // Generate Split Order Number
+            let newOrderNumber = null;
+            if (sale.orderNumber) {
+                const parts = sale.orderNumber.split('-');
+                if (parts.length >= 3) {
+                    // Standard: ORD-YYYYMM-XXXX (Length 3)
+                    // Split: ORD-YYYYMM-XXXX-2 (Length 4)
+                    if (parts.length > 3) {
+                        const lastPart = parts[parts.length - 1];
+                        const lastPartNum = parseInt(lastPart, 10);
+                        if (!isNaN(lastPartNum)) {
+                            // Increment existing suffix
+                            parts[parts.length - 1] = (lastPartNum + 1).toString();
+                            newOrderNumber = parts.join('-');
+                        } else {
+                            // Non-numeric suffix or unexpected format, just append -2
+                            newOrderNumber = `${sale.orderNumber}-2`;
+                        }
+                    } else {
+                        // First split
+                        newOrderNumber = `${sale.orderNumber}-2`;
+                    }
+                } else {
+                    // Unexpected format, append -2
+                    newOrderNumber = `${sale.orderNumber}-2`;
+                }
+            }
+
             await prisma.sale.create({
                 data: {
                     date: sale.date,
@@ -469,7 +503,8 @@ export async function shipSale(id: string, shippedQuantity: number, waybillNumbe
                     isShipped: false,
                     status: 'PENDING', // Still pending
                     description: (sale.description || '') + ` (Parçalı sevk bakiyesi)`,
-                    customerId: sale.customerId
+                    customerId: sale.customerId,
+                    orderNumber: newOrderNumber // Assign split order number
                 }
             });
         }

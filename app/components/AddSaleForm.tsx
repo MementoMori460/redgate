@@ -459,16 +459,18 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
                                 className="w-full h-9 md:h-8 bg-background border border-border rounded px-2 text-xs text-center focus:ring-1 focus:ring-primary outline-none"
                             />
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-semibold text-muted-foreground">Maliyet</label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                value={cost}
-                                onChange={(e) => setCost(Number(e.target.value))}
-                                className="w-full h-9 md:h-8 bg-background border border-border rounded px-2 text-xs text-right focus:ring-1 focus:ring-primary outline-none"
-                            />
-                        </div>
+                        {role !== 'sales' && (
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-semibold text-muted-foreground">Maliyet</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={cost}
+                                    onChange={(e) => setCost(Number(e.target.value))}
+                                    className="w-full h-9 md:h-8 bg-background border border-border rounded px-2 text-xs text-right focus:ring-1 focus:ring-primary outline-none"
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -482,12 +484,14 @@ export function AddSaleForm({ onSuccess, onCancel }: AddSaleFormProps) {
                             {totalPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
                         </span>
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-[9px] text-muted-foreground uppercase font-semibold">Hesaplanan Kar</span>
-                        <span className={`text-sm font-bold font-mono ${netProfit >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                            {netProfit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
-                        </span>
-                    </div>
+                    {role !== 'sales' && (
+                        <div className="flex flex-col">
+                            <span className="text-[9px] text-muted-foreground uppercase font-semibold">Hesaplanan Kar</span>
+                            <span className={`text-sm font-bold font-mono ${netProfit >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                {netProfit.toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL
+                            </span>
+                        </div>
+                    )}
                 </div>
             </div>
 
