@@ -9,13 +9,15 @@ export async function exportDatabase() {
         throw new Error('Unauthorized');
     }
 
-    const [stores, customers, products, sales, targets, suppliers] = await Promise.all([
+    const [stores, customers, products, sales, targets, suppliers, users, globalSettings] = await Promise.all([
         prisma.store.findMany(),
         prisma.customer.findMany(),
         prisma.product.findMany(),
         prisma.sale.findMany(),
         prisma.monthlyTarget.findMany(),
         prisma.supplier.findMany(),
+        prisma.user.findMany(),
+        prisma.globalSettings.findMany(),
     ]);
 
     // Helper to serialize decimals
@@ -56,7 +58,13 @@ export async function exportDatabase() {
                 success: serializeOptionalDecimal(t.success),
                 createdAt: t.createdAt.toISOString(),
                 updatedAt: t.updatedAt.toISOString()
-            }))
+            })),
+            users: users.map(u => ({
+                ...u,
+                createdAt: u.createdAt.toISOString(),
+                updatedAt: u.updatedAt.toISOString()
+            })),
+            globalSettings
         }
     };
 }
@@ -71,7 +79,7 @@ export async function importDatabase(data: any) {
         throw new Error('Invalid backup file format');
     }
 
-    const { stores, customers, products, sales, monthlyTargets, suppliers } = data.data;
+    const { stores, customers, products, sales, monthlyTargets, suppliers, users, globalSettings } = data.data;
 
     try {
         // Restore Stores
@@ -152,6 +160,29 @@ export async function importDatabase(data: any) {
                     },
                     update: { ...target },
                     create: { ...target }
+                });
+            }
+        }
+
+        if (users?.length) {
+            for (const user of users) {
+                // Skip if user exists? Or update roles?
+                // Let's upsert to allow password resets/role changes via restore
+                await prisma.user.upsert({
+                    where: { username: user.username },
+                    update: { ...user },
+                    create: { ...user }
+                });
+            }
+        }
+
+        // Restore GlobalSettings
+        if (globalSettings?.length) {
+            for (const setting of globalSettings) {
+                await prisma.globalSettings.upsert({
+                    where: { key: setting.key },
+                    update: { ...setting },
+                    create: { ...setting }
                 });
             }
         }

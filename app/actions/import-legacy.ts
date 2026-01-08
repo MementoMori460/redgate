@@ -187,8 +187,8 @@ export async function importChecklistData(formData?: FormData) {
                         continue; // Skip invalid date rows
                     }
 
-                    // STRICT RESTRICTION: Only allow 2026 and later
-                    if (saleDate.getFullYear() < 2026) {
+                    // STRICT RESTRICTION: Only allow 2024 and later
+                    if (saleDate.getFullYear() < 2024) {
                         // console.log(`Skipping old date: ${saleDate.getFullYear()}`);
                         continue;
                     }
