@@ -36,7 +36,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
-        <ThemeProvider>
+        <ThemeProvider initialTheme={(session?.user as any)?.theme}>
           <ClientLayout session={session}>
             {children}
           </ClientLayout>

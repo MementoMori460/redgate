@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
+import { updateUserTheme } from '../actions/user-settings';
+
 type Theme = 'dark' | 'light';
 
 interface ThemeContextType {
@@ -11,26 +13,24 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-    const [theme, setTheme] = useState<Theme>('dark'); // Default to dark as per existing design
+export function ThemeProvider({ children, initialTheme }: { children: React.ReactNode, initialTheme?: string | null }) {
+    const [theme, setTheme] = useState<Theme>(() => {
+        // Use initialTheme from DB if available, valid, else fallback
+        if (initialTheme === 'dark' || initialTheme === 'light') return initialTheme;
+        return 'dark'; // Default
+    });
 
     useEffect(() => {
-        // Check local storage or preference on mount
-        const savedTheme = localStorage.getItem('theme') as Theme;
-        if (savedTheme) {
-            setTheme(savedTheme);
-            document.documentElement.setAttribute('data-theme', savedTheme);
-        } else {
-            // Default dark
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    }, []);
+        // Apply theme to document
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
 
     const toggleTheme = () => {
         const newTheme = theme === 'dark' ? 'light' : 'dark';
         setTheme(newTheme);
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
+        // Persist to DB
+        updateUserTheme(newTheme).catch(err => console.error('Failed to persist theme:', err));
     };
 
     return (

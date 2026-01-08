@@ -27,6 +27,8 @@ export const authConfig = {
                 token.id = user.id;
                 token.name = user.name;
                 token.supplierId = user.supplierId;
+                token.username = (user as any).username;
+                token.theme = (user as any).theme;
             }
             return token;
         },
@@ -36,6 +38,8 @@ export const authConfig = {
                 session.user.id = token.id as string;
                 session.user.name = token.name as string;
                 session.user.supplierId = token.supplierId as string | null | undefined;
+                (session.user as any).username = token.username as string;
+                (session.user as any).theme = token.theme as string | null;
             }
             return session;
         },

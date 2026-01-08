@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, PlusCircle, Bell, Settings,
-  Menu, ChevronLeft, LogOut, Package, Users,
+  Menu, ChevronLeft, LogOut, Package, Users, UserCircle,
   Sun, Moon, Receipt, PieChart, ChevronRight, Building, TrendingUp, Archive, Truck
 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -25,7 +25,7 @@ const navItems = [
   { name: 'Satış Takip', href: '/sales', icon: Receipt, roles: ['admin', 'manager', 'sales', 'accountant', 'warehouse'] },
   { name: 'Raporlar', href: '/reports', icon: PieChart, roles: ['admin', 'manager', 'accountant'] },
   { name: 'Kullanıcılar', href: '/admin/users', icon: Users, roles: ['admin'] },
-  { name: 'Müşteriler', href: '/admin/customers', icon: Users, roles: ['admin'] },
+  { name: 'Müşteriler', href: '/admin/customers', icon: UserCircle, roles: ['admin'] },
   { name: 'Mağazalar', href: '/admin/stores', icon: Building, roles: ['admin'] },
   { name: 'Hedefler', href: '/admin/targets', icon: TrendingUp, roles: ['admin'] }, // Added Targets
   { name: 'Ürünler', href: '/admin/products', icon: Package, roles: ['admin'] },
